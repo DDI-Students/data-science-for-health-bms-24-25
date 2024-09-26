@@ -1,0 +1,42 @@
+---
+title: "datasauRus"
+author: "Kasia Banas"
+date: "2024-09-26"
+output: html_document
+---
+
+Install and load the datasauRus library:
+
+```{r}
+# install.packages("datasauRus")
+library(datasauRus)
+```
+
+Load the tidyverse: 
+```{r}
+library(tidyverse)
+```
+
+`datasaurus_dozen` is a dataset demonstrating the utility of visualization. 
+These 12 datasets are equal in standard measures: mean, standard deviation, 
+and Pearson's correlation. But they look very different
+Run the chunk below to get more info about this dataset:
+
+```{r}
+?datasaurus_dozen
+```
+
+See what datasets are in the datasaurus_dozen:
+
+```{r}
+datasaurus_dozen %>% 
+  distinct(dataset)
+```
+
+## Exercise 1
+Pick 2 datasets and plot them next to one another
+(I'd recommend scatterplot, use facets if you like)
+
+## Exercise 2
+For these same two datasets, find the mean and standard deviation
+for the x and y variable in each. What did you find? 
