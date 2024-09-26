@@ -1,0 +1,69 @@
+---
+title: "Week02_TBI"
+author: "Kasia Banas"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+You will need to load the required libraries first: tidyverse and here.
+Install `here` if you haven't done that already.
+
+```{r libraries}
+# install.packages("here")
+library(tidyverse)
+library(here)
+```
+
+We will be using traumatic brain injury data from a Tidy Tuesday challenge
+Learn more about the challenge and the data here (spend max 3 minutes looking at the linked page):
+https://github.com/rfordatascience/tidytuesday/blob/master/data/2020/2020-03-24/readme.md
+
+Let's start by loading in the data
+
+```{r loading-data}
+tbi_age <- read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-24/tbi_age.csv')
+tbi_year <- read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-24/tbi_year.csv')
+```
+
+Now, set up folders in your working directory: raw_data, scripts, plots and tables. Put this RMarkdown document in your scripts folder. 
+
+### Task 1
+Save both datasets in the raw_data folder (use the 'here' library)
+
+```{r saving-data-locally}
+
+```
+
+
+### Task 2
+Use your favourite functions for eyeballing data and write a couple of sentences about each dataset (its dimensions, the variables inside, types of data, etc.)
+
+### Task 3
+Imagine that you are preparing a brief for the local health authority, and they have asked you to answer the following questions. For each question, write a chunk of code that would provide the answer in a clean and reproducible way.
+
+### Task 3.1
+Which injury mechanism caused the most deaths in total?
+
+```{r most-deaths}
+
+```
+
+### Task 3.2
+Looking just at the totals, what is the number of ED visits, hospitalisations and deaths
+associated with each injury mechanism? Present the results as a table. Save this table in your tables folder.
+
+```{r totals-table}
+  
+```
+### Task 3.3
+Focusing on the oldest age group (75+), draw a bar chart illustrating the number of hospitalisations associated with each injury mechanism. Make sure that you add a title and appropriate axis labels. Save this chart in your plots folder.
+
+```{r oldest-hospitalisations}
+
+```
+
+
