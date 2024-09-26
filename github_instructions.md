@@ -67,7 +67,7 @@ After a pair programming session, you will want to save your work to Github. Her
 ![](./images/clone-fork.png)
 
 6. You will see a box titled **Clone Repository**.
-7. Make sure the "Local Path" is the location you want to save the repo. It should end with the name of the repository on Github. E.G. `xxx/xxx/xxx/data_science/Week_1_thurs`
+7. Make sure the "Local Path" is the location you want to save the repo to. It should end with the name of the repository on Github. E.G. `xxx/xxx/xxx/data_science/Week_1_thurs`
 8. Click the **Clone** button
 9. If it asks **How are you planning to use this fork?** select **For my own purposes**
 
