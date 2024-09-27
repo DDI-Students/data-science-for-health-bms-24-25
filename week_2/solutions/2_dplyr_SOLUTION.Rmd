@@ -1,0 +1,311 @@
+---
+title: "Week 02 - dplyr - SOLUTIONS"
+author: "Kasia Banas"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+```
+
+## Exercise 01: select
+
+Use [diamonds](https://ggplot2.tidyverse.org/reference/diamonds.html) example table from `ggplot2` package.
+
+Select only `price`, `cut`, and `color` columns. Use piping and `select`.
+
+```{r exercise 01-1}
+data("diamonds")
+diamonds %>% 
+  select(price, cut, color)
+```
+
+Select only `price`, `cut`, and `color` columns. Use base R (no piping or select).
+
+```{r exercise 01-2}
+diamonds[,c("price", "cut", "color")]
+```
+
+Select all columns except for `x`, `y`, and `z`. Use negative selection and piping.
+
+```{r exercise 01-3}
+diamonds %>% 
+  select(-c(x, y, z))
+```
+
+Check out the help page for the `select()` function. Use `:` notation to select columns from `carat` till `clarity`.
+
+```{r exercise 01-4}
+diamonds %>% 
+  select(carat:clarity)
+```
+
+And now select these same columns by capitalising on the fact that all their names (and none of the others) start with the letter "c".
+
+```{r exercise 01-5}
+diamonds %>% 
+  select(starts_with("c"))
+```
+
+BONUS: How would you select these 4 columns in base R, without simply listing their names?
+
+```{r exercise 01-6}
+# Select columns that start with "c"
+selected_columns <- diamonds[, startsWith(names(diamonds), "c")]
+
+# Print the first few rows of the selected columns
+print(head(selected_columns))
+```
+
+## Exercise 02: conditions 1
+
+Examine the code and decide on whether a condition will be `TRUE` or `FALSE`. Write down the answer and run the chunk to check the answer.
+
+**Answer 1:**
+
+```{r exercise 02-1}
+x <- 4
+(x > 3)
+```
+
+TRUE
+
+**Answer 2:**
+
+```{r exercise 02-2}
+x <- 4
+y <- 5
+(x != y)
+```
+
+TRUE
+
+## Exercise 03: conditions 2
+
+Examine the code and decide on whether a condition will be `TRUE` or `FALSE`. Write down the answer and run the chunk to check the answer.
+
+**Answer 1:**
+
+```{r exercise 03-1}
+x <- 4
+!(x < 3)
+```
+
+TRUE
+
+**Answer 2:**
+
+```{r exercise 03-2}
+x <- 4
+y <- 5
+!(x != y)
+```
+
+FALSE
+
+## Exercise 04: conditions 3
+
+Examine the code and decide on whether a condition will be `TRUE` or `FALSE`. Write down the answer and run the chunk to check the answer.
+
+**Answer 1:**
+
+```{r exercise 03-1}
+x <- 4
+(x < 3) | (x >=4)
+```
+
+TRUE
+
+**Answer 2:**
+
+```{r exercise 04-2}
+x <- 4
+y <- 6
+(x == y) | ((x < 5) & (y > 5))
+```
+
+TRUE
+
+**Answer 3:**
+
+```{r exercise 04-3}
+x <- 3
+y <- 3
+(x != y) & ((x <= 3) & (y >= 3))
+```
+
+FALSE
+
+**Answer 4:**
+
+```{r exercise 04-4}
+x <- 3
+y <- 3
+(x != y) | ((x <= 3) & (y >= 3))
+```
+
+TRUE
+
+## Exercise 05: conditions
+
+Examine the code and decide on whether a condition will be `TRUE` or `FALSE`. Write down the answer and run the chunk to check the answer.
+
+**Answer 1:**
+
+```{r exercise 05-1}
+x <- seq(-4, 4, 2)
+(x ==0)
+```
+
+F F T F F
+
+**Answer 2:**
+
+```{r exercise 05-2}
+x <- seq(-4, 4, 2)
+y <- 1:5
+(x + y <= 0)
+```
+
+T T F F F
+
+**Answer 3:**
+
+```{r exercise 05-3}
+x <- seq(-4, 12, 4)
+y <- 1:5
+(x > y)
+```
+
+F F T T T
+
+**Answer 4:**
+
+```{r exercise 05-4}
+x <- seq(-4, 12, 4)
+y <- 1:5
+(x > y) & ((x < 10) | (y < 3))
+```
+
+## Exercise 06: logical indexing
+
+Use logical indexing to values of `x` that are above 3.
+
+```{r exercise 06-1}
+x <- -3:7
+# Your code goes here
+x[x>3]
+```
+
+Use logical indexing to extract values of `x` when it is higher than value in `y`
+
+```{r exercise 06-2}
+x <- -3:7
+y <- seq(5, -2, length.out = 11)
+# Your code goes here
+x[x>y]
+```
+
+Use logical indexing to extract values of `x` that are greater than the mean value of x (avoid using intermediate variables).
+
+```{r exercise 06-3}
+x <- -3:7
+# Your code goes here
+x[x>mean(x)]
+```
+
+## Exercise 07: filter
+
+Use [msleep](https://ggplot2.tidyverse.org/reference/msleep.html) example table from `ggplot2` package.
+
+Filter the table to keep only `"domesticated"` animals (variable name is `conservation`).
+
+```{r exercise 07-1}
+data(msleep)
+msleep %>% 
+  filter(conservation == "domesticated")
+```
+
+Filter the table to keep only the omnivores (`vore`) that sleep more than 10 hours in total.
+
+```{r exercise 07-2}
+msleep %>% 
+  filter(vore == "omni" & sleep_total >10)
+```
+
+Filter the table to exclude animals with body weight above `50`.
+
+```{r exercise 07-3}
+msleep %>% 
+  filter(bodywt <= 50)
+```
+
+Filter the table to exclude animals with body weight below [median](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/median.html) body weight. Hint, you do not need a temporary variable.
+
+```{r exercise 07-4}
+msleep %>% 
+  filter(bodywt >= median(bodywt))
+```
+
+## Exercise 08: arrange
+
+Use [presidential](https://ggplot2.tidyverse.org/reference/presidential.html) example table from *ggplot2* package.
+
+Arrange the table by party.
+
+```{r exercise 08-1}
+data("presidential")
+presidential %>% 
+  arrange(party)
+```
+
+Arrange the table by start date in the descending order.
+
+```{r exercise 08-2}
+presidential %>% 
+  arrange(desc(start))
+```
+
+Arrange the table by party (descending order) and president's name (ascending order).
+
+```{r exercise 08-3}
+presidential %>% 
+  arrange(desc(party), name)
+```
+
+## Exercise 9: mutate
+
+Use [msleep](https://ggplot2.tidyverse.org/reference/msleep.html) example table from `ggplot2` package.
+
+Compute new variable / column with sleep to body-weight ratio.
+
+```{r exercise 10-1}
+msleep_with_ratio <- msleep %>% 
+  mutate(sleep_wt_ratio = sleep_total/bodywt)
+```
+
+Compute new variable / column `is_big` of logical value that are `TRUE` if body_weight is above `50`.
+
+```{r exercise 10-2}
+msleep_with_big <- msleep %>% 
+  mutate(is_big = bodywt > 50)
+```
+
+Compute three new variables / columns. First, compute the *mean* and *standard deviation* of total sleep variable. You will get the same value in all the rows, make sure that your columns are *not* called `mean` and `sd`. Then compute a z-score of the total sleep: $Z(x) = (x - mean(x)) / sd(x)$. Put all computations into a single mutate code.
+
+```{r exercise 10-3}
+msleep_with_sleep_z <- msleep %>% 
+  mutate(mean_sleep = mean(sleep_total, na.rm = TRUE),
+         sd_sleep = sd(sleep_total, na.rm = TRUE),
+         z_sleep = (sleep_total - mean_sleep)/sd_sleep)
+```
+
+Compute z-score for body weight variable, do not store mean and standard deviation in extra columns but use them directly.
+
+```{r exercise 10-4}
+msleep_with_bodywt_z <- msleep %>% 
+  mutate(z_bodywt = (bodywt - mean(bodywt, na.rm = T))/sd(bodywt, na.rm = T))
+```

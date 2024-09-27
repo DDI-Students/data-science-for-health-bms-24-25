@@ -1,0 +1,116 @@
+---
+title: "Week02_TBI"
+author: "Christopher A Oldnall"
+date: "`r Sys.Date()`"
+output: html_document
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+You will need to load the required libraries first: tidyverse and here.
+
+```{r libraries}
+# install.packages("tidyverse")
+# install.packages("here")
+library(tidyverse)
+library(here)
+```
+
+We will be using traumatic brain injury data from a Tidy Tuesday challenge
+Learn more about the challenge and the data here (spend max 3 minutes looking at the linked page):
+https://github.com/rfordatascience/tidytuesday/blob/master/data/2020/2020-03-24/readme.md
+
+Let's start by loading in the data
+
+```{r loading-data}
+tbi_age <- read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-24/tbi_age.csv')
+tbi_year <- read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-03-24/tbi_year.csv')
+```
+
+Now, set up folders in your working directory: raw_data, scripts, plots and tables. Put this RMarkdown document in your scripts folder. 
+
+### Task 1
+Save both datasets in the raw_data folder (use the 'here' library)
+
+```{r saving-data-locally}
+write_csv(tbi_age, file= here("raw_data", "tbi_age.csv"))
+write_csv(tbi_year, file= here("raw_data", "tbi_year.csv"))
+```
+
+
+### Task 2
+Use your favourite functions for eyeballing data and write a couple of sentences about each dataset (its dimensions, the variables inside, types of data, etc.)
+
+```{r Task 2}
+str(tbi_age)
+table(tbi_age$type)
+table(tbi_age$injury_mechanism)
+
+str(tbi_year)
+table(tbi_year$injury_mechanism)
+table(tbi_year$type)
+```
+
+tbi_age:
+This data frame has 231 records and 5 variables. The variables are age_group (aggregated into categories currently stored as characters), type which represents what was the result of the brain injury (also split into 3 categories but currently strings), injury_mechanism (also split into 8 categories but currently strings). number_est is then the number within that specific age/type/mechanism group whilst the rate_est is the number_est divided by the total population. Both of these are continious numbers.
+
+tbi_year:
+This data has 216 records and 5 variables. There is an injury_mechanism variable (currently strings but with the same 8 categories), then type which is also analogous to the previous data frame. We then have year, rate_est and number_est which are all currently saved as continious numbers.
+
+### Task 3
+Imagine that you are preparing a brief for the local health authority, and they have asked you to answer the following questions. For each question, write a chunk of code that would provide the answer in a clean and reproducible way.
+
+### Task 3.1
+Which injury mechanism caused the most deaths in total?
+
+```{r most-deaths}
+tbi_age %>% 
+  filter(type == "Deaths" & age_group == "Total") %>% 
+  arrange(desc(number_est)) %>% 
+  head(n = 1)
+```
+
+### Task 3.2
+Looking just at the totals, what is the number of ED visits, hospitalisations and deaths
+associated with each injury mechanism? Present the results as a table. Save this table in your tables folder.
+
+```{r totals-table}
+totals_table <- tbi_age %>%
+  filter(age_group == "Total") %>% 
+  select(-rate_est) %>% 
+  pivot_wider(names_from = "type", values_from = "number_est") %>% 
+  select(-age_group) %>% 
+  arrange(injury_mechanism)
+
+write_tsv(totals_table, file = here("tables", "totals_table.tsv"))
+write_csv(totals_table, file = here("tables", "totals_table.csv"))
+```
+### Task 3.3
+Focusing on the oldest age group (75+), draw a bar chart illustrating the number of hospitalisations associated with each injury mechanism. Make sure that you add a title and appropriate axis labels. Save this chart in your plots folder.
+
+```{r oldest-hospitalisations}
+tbi_age$injury_mechanism <- str_wrap(tbi_age$injury_mechanism, width = 15)
+
+oldest_hosp_plot <- tbi_age %>% 
+  filter(age_group == "75+" & type == "Hospitalizations") %>% 
+  ggplot(aes(x = injury_mechanism, y = number_est)) +
+  geom_col() +
+  scale_x_discrete(guide = guide_axis(angle = 90)) +
+  ggtitle("Plot showing hospitalisation numbers for each injury mechanism (Age Group: 75+)") +
+  xlab("Injury Mechanism") +
+  ylab("Estimated Number")
+
+# Chris Soln (using png)
+png(filename="../plots/oldest_hosp_plot.png")
+oldest_hosp_plot
+dev.off()
+
+# Kasia Soln (using ggsave)
+ggsave(filename = "../plots/oldest_hosp_plot.png", plot = oldest_hosp_plot)
+```
+
+
