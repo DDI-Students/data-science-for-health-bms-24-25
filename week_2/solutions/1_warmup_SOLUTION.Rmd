@@ -1,0 +1,141 @@
+---
+title: "Week 02 Warmup exercises"
+author: "Kasia Banas"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+```
+
+
+## Warm-up
+
+Assume the following definitions for a survey:
+
+-   A person with an age from 1 to 17 years is classified as a minor;
+
+-   a person with an age from 18 to 64 years is classified as an adult;
+
+-   a person with an age from 65 to 99 years is classified as a senior.
+
+Generate a vector with 100 random samples that specifies the age of 100 people (in years), but contains exactly 20 minors, 50 adults, and 30 seniors.
+
+```{r}
+minors <- sample(1:17, size = 20, replace = TRUE)
+adults <- sample(18:64, size = 50, replace = TRUE)
+seniors <- sample(65:99, size = 30, replace = TRUE)
+age_vector <- c(minors, adults, seniors)
+```
+
+Now use some functions on your age vector to answer the following questions:
+
+1.  What is the average (mean), minimum, and maximum age in this sample?
+```{r}
+age_df <- tibble(age = age_vector)
+age_vector_summary <- age_df %>%
+  summarise(av_mean=mean(age), av_min=min(age), av_max=max(age))
+```
+
+2.  How many people are younger than 25 years?
+```{r}
+number_under25s <- age_df %>%
+  filter(age < 25) %>% 
+  nrow()
+```
+
+3.  What is the average (mean) age of people older than 50 years?
+```{r}
+mean_over50s <- age_df %>%
+  filter(age > 50) %>% 
+  summarise(over50mean = mean(age))
+```
+
+4.  How many people have a round age (i.e., an age that is divisible by 10)? What is their mean age?
+```{r}
+number_round_ages <- age_df %>%
+  filter(age %% 10 == 0) %>%
+  summarise(n = n(), mean = mean(age))
+```
+
+## Exercise 1: Strange histograms
+
+The following plot shows the distribution of fuel economy in city environments, but adds a frequency polygon as a 2nd geom (see ?geom_freqpoly).
+
+```{r}
+data(mpg)
+
+ggplot(mpg, aes(x = cty)) +
+  geom_histogram(aes(x = cty), binwidth = 2, fill = "gold", color = "black") +
+  geom_freqpoly(color = "steelblue", size = 1) +
+  labs(title = "Distribution of fuel economy", 
+       x = "Miles per gallon (in city)",
+       caption = "Data from ggplot2::mpg") +
+  theme_light()
+```
+
+1.  Why is the (blue) line of the polygon lower than the (yellow) bars of the histogram?
+
+Here we see that the blue line represents continuous frequency. That is, for every miles per gallon measurement we count how many of that measurement there is within the space and then draw a cross - from this a line is then made to 'connect the dots'. Meanwhile the histogram takes a range of measurements between two bounds (a, b) and puts a bar in the space that counts how many fall between that range.
+
+2.  Change 1 argument in the code so that both (lines and bars) have the same heights.
+
+```{r}
+data(mpg)
+
+ggplot(mpg, aes(x = cty)) +
+  geom_histogram(aes(x = cty), binwidth = 2, fill = "gold", color = "black") +
+  geom_freqpoly(color = "steelblue", binwidth = 2) +
+  labs(title = "Distribution of fuel economy", 
+       x = "Miles per gallon (in city)",
+       caption = "Data from ggplot2::mpg") +
+  theme_light()
+```
+
+3.  The code above repeats the aesthetic mapping aes(x = cty) in 2 locations. Which of these can be deleted without changing the resulting graph? Why?
+
+The one within geom_histogram since it inherits the data set and variables from previous lines.
+
+4.  Why can't we simply replace geom_freqpoly by geom_line or geom_smooth to get a similar line?
+
+geom_freqpoly is a frequency line which discretises the measurements from 1 variable. Meanwhile geom_line or geom_smooth are regression lines which demonstrate the relationship between 2 variables.
+
+## Exercise 2: Chick diets
+
+The ChickWeight data (contained in the datasets package of R) contains the results of an experiment that measures the effects of Diet on the early growth of chicks.
+
+1.  Save the ChickWeight data as a tibble chick_weight and inspect its dimensions and variables.
+
+```{r}
+data("ChickWeight")
+chick_weight <- tibble(ChickWeight)
+str(chick_weight)
+```
+
+2.  Create a line plot showing the weight development of each individual chick (on the y-axis) over Time (on the x-axis) for each Diet (in 4 different facets).
+
+```{r 2.2}
+chick_weight %>% 
+  ggplot(aes(x = Time, y = weight, colour =  Chick)) +
+  geom_line(alpha = .6) +
+  facet_wrap(~ Diet) 
+```
+
+
+3.  The following bar chart shows the number of chicks per Diet over Time. We see that the initial Diet groups contain a different number of chicks and some chicks drop out over Time. Try re-creating this plot (with geom_bar and dodged bar positions).
+
+![](chicks-diets.png)
+
+```{r 2.3}
+number_chicks_per_diet <- chick_weight %>%
+  group_by(Diet, Time)
+
+number_chicks_per_diet %>%
+  ggplot(aes(x=Time, fill=Diet)) +
+  geom_bar(position="dodge")
+```
