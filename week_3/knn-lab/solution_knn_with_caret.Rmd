@@ -1,0 +1,104 @@
+---
+title: "Tunour Classifier - K-Nearest Neighbours"
+author: "Your name"
+date: "September 11, 2024"
+output: 
+  html_document:
+    toc: true
+    number_sections: true
+editor_options: 
+  chunk_output_type: inline
+---
+
+## Step 1: Install and load necessary libraries
+
+```{r }
+# Install packages if you haven't already
+# install.packages("caret")
+
+library(tidyverse)
+library(here)
+library(caret)
+```
+
+## Step 2: Load the dataset
+
+```{r load-data}
+
+cancer_data <- read_csv(here("data", "unscaled_wdbc.csv"))
+cancer_data
+```
+
+## Step 3: Prepare the data
+
+Encode the target variable, and split the data into training and testing sets.
+
+```{r}
+
+# Keep only the 'Perimeter', 'Concavity', and 'Class' columns
+data_subset <- cancer_data %>% 
+  select(Perimeter, Concavity, Class)
+
+# Encode Class as a factor
+data_subset <- data_subset %>% 
+  mutate(Class = factor(Class))
+  
+# Set a seed for reproducibility
+set.seed(42)
+
+# Split the data into training (80%) and testing (20%) sets
+train_index <- createDataPartition(data_subset$Class, p = 0.8, list = FALSE)
+
+train_data <- data_subset %>% 
+  slice(train_index)
+
+test_data <- data_subset %>% 
+  slice(-train_index)
+
+```
+
+## Step 4: Scale the data and train the KNN model
+
+Now, you can train the KNN model using train() from the caret package. You can also use trainControl() to specify cross-validation and scale and center the data if necessary.
+
+```{r}
+# Define training control (using 10-fold cross-validation)
+trainControl <- trainControl(method = "cv", number = 10)
+
+# Train the KNN model (you can tune 'k' by setting tuneLength)
+knn_model <- train(Class ~ ., 
+                   data = train_data, 
+                   method = "knn",
+                   preProcess = c("center", "scale"), 
+                   trControl = trainControl, 
+                   tuneLength = 10)
+
+# View the results
+knn_model
+
+```
+
+## Step 5: Make predictions
+
+Once the model is trained, you can use it to predict on the test set and evaluate its performance.
+
+```{r}
+# Make predictions on the test set
+predictions <- predict(knn_model, newdata = test_data)
+
+# View the confusion matrix to assess the accuracy
+confusionMatrix(predictions, test_data$Class)
+```
+
+
+```{r}
+# What if we have a new observation?
+
+new_observation <- tibble(
+  Perimeter = 125,
+  Concavity = 0.04
+) 
+
+prediction <- predict(knn_model, newdata = new_observation)
+prediction
+```
