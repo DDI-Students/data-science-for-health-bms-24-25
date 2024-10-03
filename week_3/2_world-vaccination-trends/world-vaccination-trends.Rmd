@@ -1,0 +1,111 @@
+---
+title: "Data visualisation"
+author: "Data Science in Biomedicine - Week 3"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## World vaccination trends 
+
+Data scientists find work in all sectors of the economy and all types of organizations. Some work in collaboration with public sector organizations to solve problems that affect society, both at local and global scales. Today we will be looking at a global problem with real data from the World Health Organization (WHO). According to WHO, Polio is a disease that affects mostly children younger than 5 years old, and to date there is no cure. However, when given a vaccine, children can develop sufficient antibodies in their system to be immune to the disease. Another disease, Hepatitis B, is also known to affect infants but in a chronic manner. There is also a vaccine for Hepatitis B available.
+
+The columns in the dataset are:
+
+- `who_region` - The WHO region of the world
+- `yr` - The year
+- `pct_vaccinated` - Estimated percentage of people vaccinated in the region
+- `vaccine` - Whether it's the polio or the hepatitis_b vaccine
+
+We want to know two things. First, has there been a change in Polio or Hepatitis B vaccination patterns throughout the years? And if so, what is that pattern? Second, have the vaccination patterns for one of these diseases changed more than the other? The goal for today is to produce a plot of the estimated percentage of people vaccinated per year. To do this, you will follow the steps outlined below.
+
+**Task 1**
+Read the world_vaccination.csv file. Filter the data so that we don't have any NA's in the `pct_vaccinated` column. We also want to filter out the `(WHO) Global` region as it is just the average of the other regions. Assign your filtered data to an object called `world_vaccination`.
+
+Hint: When you want to filter for rows that aren't equal to something, in R you can use the != operator. For example, to remove all the cars with 6 cylinders from the mtcars built-in R data set we would do the following:
+```{r}
+filter(mtcars, cyl != 6)
+```
+
+The function `is.na()` is a function that indicates which elements are missing. Since the `!=` operator filters rows that are not equal to something, we can use `!is.na()` to find the values that are not equal to NA. For instance, to filter out NAs from the `cyl` column in the `mtcars` data set we would do the following:
+
+```{r}
+filter(mtcars, !is.na(cyl))
+```
+
+Now you code:
+```{r}
+# Your code below:
+
+```
+
+**Task 2**
+
+Create a scatter plot of the percentage of people vaccinated (y-axis) against year (x-axis) for all the regions in world_vaccination. Make sure to label your axes with human readable labels.
+
+Assign your plot to an object called `world_vacc_plot`.
+
+```{r}
+
+```
+
+
+**Task 3**
+
+Modify your scatter plot to highlight the difference between the two types of vaccine - give each vaccine type a different colour and a different shape. 
+Remember to change all the axes and legends so they have nicely formatted, human-readable labels. 
+
+```{r}
+
+```
+
+Now we see that although the dates where the percentage vaccinated became > 0 for each vaccine type started out in different years, they both increased at similar rates and are currently resting at about the same amount of percentage vaccinated. There is some variation that still exists in the data however, and perhaps that could be attributed to region? Let's create some more visualizations to see if that is indeed the case!
+
+To get started, let's focus on the Polio vaccine data, and then we'll look at both together.
+
+**Task 4**
+
+Create a data frame object named polio that contains only the rows where the vaccine is "polio".
+
+```{r}
+
+```
+
+**Task 5**
+
+Now create a scatter plot using the `polio` data where percentage vaccinated is on the y-axis, year is on the x-axis and each region has a different coloured point, and a different shape. Name it `polio_regions`. 
+
+```{r}
+
+```
+
+**Task 6**
+
+Although when we have multiple groups, its easier for us to see the differences when we change point colour and shape, at some point there are too many groups to keep things straight. We are approaching that on the plot above, and so we need to do something different... One thing we could try is to change the point to a line to reduce the noise/chaos of the plot above. We would also not have a shape. Do that in the code chunk below and name the plot object `polio_regions_line`.
+
+
+```{r}
+
+```
+
+**Task 7**
+One thing that is still not ideal with the visualization above is the legend title is not very readable. Let's add another layer to `polio_regions_line` to do that.
+
+```{r}
+
+```
+
+**Task 8**
+
+Now that we know how to effectively plot the percentage vaccinated against Polio over time for each region, how might we compare this to what we see for each region for the percentage vaccinated against Hepatitis B? In this case we would like two side-by-side or two vertically arranged plots. Use facetting to achieve this.
+
+```{r}
+
+```
+
+**Acknowledgement**
+
+These exercises have been adapted from the worksheets accompanying Data Science: A First Introduction by Tiffany Timbers, Trevor Campbell, and Melissa Lee.
