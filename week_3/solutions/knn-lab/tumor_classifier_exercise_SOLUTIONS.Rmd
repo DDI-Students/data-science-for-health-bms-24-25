@@ -1,0 +1,134 @@
+---
+title: "Tumor Classifier - K-Nearest Neighbours"
+author: "Your name"
+date: "September 11, 2024"
+output: html_document
+---
+
+# Tumour Classifier with K-Nearest Neighbours (KNN)
+
+In this exercise, you'll build a KNN classifier to distinguish between tumor classes based on a subset of features. Complete the steps by filling in the missing code and answering questions.
+
+## Instructions
+
+### Step 1: Install and load necessary libraries
+
+Fill in the missing code to install and load the following libraries: tidyverse, here, and caret.
+
+```{r }
+# Install packages if you haven't already
+# install.packages("caret")
+
+library(tidyverse) 
+library(here)
+library(caret)
+```
+
+### Step 2: Load the dataset
+
+```{r load-data}
+
+cancer_data <- read_csv(here("data", "synthetic_cancer_data.csv"))
+cancer_data
+```
+
+### Step 3: Prepare the data
+
+-   Select the three relevant variables; Perimeter, Concavity, Class
+-   Convert the target variable to a factor
+-   Split the data into 80% training and 20% testing sets
+
+```{r}
+
+# Keep only the three relevant columns
+data_subset <- cancer_data %>% 
+  select(Perimeter, Concavity, Class)
+
+# Encode the target variable as a factor
+data_subset$Class <- as.factor(data_subset$Class)
+
+data_subset <- data_subset %>% 
+  mutate(Class = factor(Class))
+  
+# Set a seed for reproducibility
+set.seed(42)
+
+# Split the data into training (80%) and testing (20%) sets
+train_index <- createDataPartition(data_subset$Class, p = 0.8, list = FALSE)
+
+train_data <- data_subset %>% 
+  slice(train_index)
+
+test_data <- data_subset %>% 
+  slice(-train_index)
+
+```
+
+*Question*: Why is it important to set a seed before splitting the data?
+
+*Answer*: Setting a seed ensures reproducibility. Without it, every time the code is run, the random partitioning of data may differ, leading to different training and testing sets, which can result in inconsistent model performance. A fixed seed guarantees that anyone running the code will get the same results.
+
+### Step 4: Train the KNN model
+
+-   Define a cross-validation control.
+-   Train the KNN model, tuning the number of neighbours 'k' using tuneLength = 10.
+
+```{r}
+# Define training control (using 10-fold cross-validation)
+trainControl <- trainControl(method = "cv", number = 10)
+
+# Train the KNN model 
+knn_model <- train(Class ~ ., 
+                   data = train_data, 
+                   method = "knn", 
+                   trControl = trainControl, 
+                   tuneLength = 10, 
+                   preProcess = c("center", "scale"))
+
+# View the results
+print(knn_model)
+
+```
+
+*Question*: What is the purpose of using cross-validation when training the model?
+
+*Answer*: Cross-validation helps to assess how well the model generalises to unseen data. It splits the data into multiple subsets, trains the model on some subsets, and tests it on the remaining ones. This method reduces the likelihood of overfitting and gives a more robust estimate of model performance by averaging the results across multiple training/testing splits.
+
+### Step 5: Make predictions
+
+-   Use the trained model to predict on the test data.
+-   Assess the performance using a confusion matrix.
+
+```{r}
+# Make predictions on the test set
+predictions <- predict(knn_model, newdata = test_data)
+
+# Confusion matrix  
+confusionMatrix(predictions, test_data$Class)
+
+```
+
+*Question*: What insights can you gather from the confusion matrix? Is the model performing well?
+
+*Answer*: A confusion matrix provides a detailed breakdown of the model’s predictions. It shows how many true positives, true negatives, false positives, and false negatives the model produced. By analyzing these, we can calculate metrics like accuracy, precision, recall, and F1-score to assess performance. For example:
+
+-   Accuracy measures overall correctness.
+-   Precision indicates how many predicted positives are actually correct.
+-   Recall (Sensitivity) tells how many actual positives were correctly identified.
+
+If the confusion matrix shows a high number of correct predictions (true positives and true negatives), the model is performing well. However, if there are many false positives or false negatives, the model may need improvement.
+
+### Step 6: Tune the model (optional)
+
+-   Explore the best value of 'k' from the trained model.
+-   Discuss how the number of neighbors (k) impacts model performance.
+
+```{r}
+# Check the best value of 'k'
+best_k <- knn_model$bestTune
+print(best_k)
+```
+
+*Question*: What is the optimal value of 'k'? How would you explain its significance?
+
+*Answer*: The optimal value of 'k' is found through cross-validation, and it represents the number of nearest neighbors the model uses to classify a data point. A small 'k' (like 1) might make the model sensitive to noise in the data, leading to overfitting. On the other hand, a large 'k' could oversimplify the model, causing underfitting by averaging too many neighbors' labels. The best 'k' balances the trade-off between overfitting and underfitting, providing a model that generalizes well to new data.
