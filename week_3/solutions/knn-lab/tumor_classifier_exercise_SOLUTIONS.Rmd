@@ -9,6 +9,14 @@ output: html_document
 
 In this exercise, you'll build a KNN classifier to distinguish between tumor classes based on a subset of features. Complete the steps by filling in the missing code and answering questions.
 
+You will use the `caret` package for this exercise. Use the 'help' in RStudio to discover how they work. The key functions that you will use are:
+
+- createDataPartition
+- trainControl
+- train
+- predict
+- confusionMatrix
+
 ## Instructions
 
 ### Step 1: Install and load necessary libraries
@@ -86,7 +94,7 @@ knn_model <- train(Class ~ .,
                    preProcess = c("center", "scale"))
 
 # View the results
-print(knn_model)
+knn_model
 
 ```
 
