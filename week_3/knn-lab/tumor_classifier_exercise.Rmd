@@ -1,13 +1,11 @@
 ---
-title: "Tumor Classifier - K-Nearest Neighbours"
+title: "Tumour Classifier - K-Nearest Neighbours"
 author: "Your name"
 date: "September 11, 2024"
 output: 
   html_document:
     toc: true
     number_sections: true
-editor_options: 
-  chunk_output_type: inline
 ---
 
 # Tumour Classifier with K-Nearest Neighbours (KNN)
@@ -59,8 +57,6 @@ data_subset <- ... %>%
 # Encode the target variable as a factor
 ...$... <- ...(...$...)
 
-... <- ... %>% 
-  ...(... = ...(...))
   
 # Set a seed for reproducibility
 set.seed(42)

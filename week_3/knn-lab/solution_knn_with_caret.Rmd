@@ -1,13 +1,11 @@
 ---
-title: "Tunour Classifier - K-Nearest Neighbours"
+title: "Tumour Classifier - K-Nearest Neighbours"
 author: "Your name"
 date: "September 11, 2024"
 output: 
   html_document:
     toc: true
     number_sections: true
-editor_options: 
-  chunk_output_type: inline
 ---
 
 ## Step 1: Install and load necessary libraries
