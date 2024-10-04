@@ -134,7 +134,7 @@ If the confusion matrix shows a high number of correct predictions (true positiv
 ```{r}
 # Check the best value of 'k'
 best_k <- knn_model$bestTune
-print(best_k)
+best_k
 ```
 
 *Question*: What is the optimal value of 'k'? How would you explain its significance?
