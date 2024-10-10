@@ -1,0 +1,147 @@
+---
+title: "Particiapants and Responses"
+author: "Kasia Banas"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+```
+
+## Exercise 01
+
+You will need the files **IM.csv** and **GP.csv** in the data folder for this exercise.
+
+These are participants responses on two questionnaires with each participant identified by their ID (`Participant` in *IM.csv* and `Respondent` in *GP.csv*), `Condition` (which experimental group they belong to), and their `Gender`.
+
+Read both datasets and join them so that there no missing values in the resulting dataset (some participants are missing in `GP.csv`, so there are *three* joins that can do this, which one will you pick? Use a tidyverse function).
+
+Then, turn `Condition` and `Gender` into factors, so that for `Condition` levels are `"control"` (`1`) and `"game"` (`2`) and for `Gender` levels are `"female"` (`1`) and `"male"` (`2`).
+
+```{r exercise 01}
+IM <- read_csv("./data/IM.csv")
+GP <- read_csv("./data/GP.csv")
+
+joined_data <- IM %>%
+  inner_join(GP, by = c("Participant" = "Respondent"))
+# notice what happened to Condition and Gender
+
+joined_data <- joined_data %>%
+  # remove duplicate columns
+  select(-ends_with(".y")) %>%
+  # rename the remaining Condition and Gender columns
+  rename(Condition = Condition.x, Gender = Gender.x)
+
+joined_data <- joined_data %>% 
+  mutate(
+    Condition = factor(Condition, labels = c("control", "game")), 
+    Gender = factor(Gender, labels = c("female", "male"))
+  )
+
+# to check whether everything has worked as expected, run the line below
+# str(joined_data)
+
+```
+
+## Exercise 02
+
+This is an exercise to practice joining data frames and how the different types of join behave.
+
+Create two data frames that need to be joined by a single key column.
+
+Step 1: Create a data frame that has two columns. In the first column, called `x_id`, put the numbers 1 -\> n where n is a number of your choice. In the second column, called x_value, use [rnorm()](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/Normal.html) function to generate normally distributed data with mean of 180 and standard deviation of 50. Name this data frame `x_df`
+
+Step 2: Create another data frame that has two columns. In the first column, called `y_id`, put the numbers `1 -> p` where p is a number of your choice and `p` is not equal to `n`. In the second column, called `y_value`, use [rnorm()](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/Normal.html) function to generate normally distributed data with mean of 10 and standard deviation of 2. Name this data frame `y_df`
+
+Step 3: Join the two data frames using a join of your choice and note the dimensions of the resulting object. Try a different join and see what happens.
+
+Step 4: Play around with values of `n` and `p` . Do it so that *inner* and *right* join would give the same final table but *left* and *full* would give you a longer one (test this explicitly!). After joining two data frames, plot `x_value` against `y_value` and superimpose linear regression fit.
+
+```{r exercise 02}
+x_id <- c(1:100)
+x_value <- rnorm(100, mean=180, sd=50)
+x_df <- data.frame(x_id = x_id, x_value = x_value) 
+
+y_id <- c(1:80)
+y_value <- rnorm(80, mean=10, sd=2)
+y_df <- data.frame(y_id = y_id, y_value = y_value) 
+
+inner_joined_frame <- x_df %>% 
+  inner_join(y_df, by = c("x_id" = "y_id"))
+
+right_joined_frame <- x_df %>% 
+  right_join(y_df, by = c("x_id" = "y_id"))
+
+left_joined_frame <- x_df %>% 
+  left_join(y_df, by = c("x_id" = "y_id"))
+
+full_joined_frame <- x_df %>% 
+  full_join(y_df, by = c("x_id" = "y_id"))
+
+xy_plot <- inner_joined_frame %>% 
+  ggplot(aes(x = x_value, y = y_value)) +
+  geom_point() +
+  geom_smooth(method = lm)
+
+# How many points are shown in this graph?
+# Is there a correlation between x and y? What did you expect?
+xy_plot
+```
+
+## Exercise 03
+
+Analyze *GP.csv* data, a questionnaire on gaming habits, which was conducted prior to an experiment to check whether two groups of participants assigned to *Game* and *Experiment* conditions have similar gaming habits.
+
+We would like to inspect responses to individual items in a questionnaire for different conditions, as this will tell us whether we should expect a difference.
+
+Split the computations below into two pipelines. One that loads and pre-processes the data (steps 1-3). Another one that produces a summary and stores it into a different table (step 4).
+
+Advice, implement it one step at a time, checking the data frame and making sure that you get expected results before piping it and adding the next operation.
+
+1.  Read the file.
+2.  Convert `Condition` column to a factor with `1` corresponding to `"game"` and `2` to `"control"`.
+3.  Pivot all `GP..` columns. You should get a table with five columns: `Respondent`, `Condition`, `Gender`, `name` (or a column name that you specified), and `value` (or a column name that you specified). Hint, you can use slicing `:` to specify the range of columns or [starts_with()](https://tidyselect.r-lib.org/reference/starts_with.html) function to specify a common prefix. Try both approaches.
+4.  Group data by Condition and GP item and compute median and [median absolute deviation](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/mad.html) of responses. These are robust versions of mean and standard deviation, better suitable for data with potential outliers.
+
+```{r exercise 03}
+GP_raw <- read_csv("./data/GP.csv") %>%
+  mutate(Condition=factor(as.character(Condition), labels=c("game", "control"))) %>% 
+  pivot_longer(starts_with("GP"))
+
+GP_Med_Sum <- GP_raw %>%
+  group_by(Condition, name) %>%
+  summarise(median_value = median(value), MAD = mad(value))
+
+```
+
+## Exercise 04
+
+Now you have a data frame that has median and MAD values for each condition and item. Plot them to compare them visually. Use facets and color to make it easier to identify the items and conditions.
+
+NOTE: MAD is a measure of spread, and thus it doesn’t make much sense to plot it as a single point. A better approach is to use it as the basis for drawing error bars, which can be used to illustrate spread in your data.
+
+```{r exercise 04}
+GP_Med_Sum %>%
+  ggplot(aes(x = name, y = median_value, colour = name)) +
+  geom_point(size = 2) +
+  geom_errorbar(aes(ymin = median_value - MAD/2, ymax = median_value + MAD/2)) + 
+  facet_wrap(~Condition, ncol = 1) +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5)) +
+  theme(legend.position = "none") # removes the legend, as it's unnecessary
+```
+
+## Exercise 05
+
+Perform similar analysis on the pivoted data but do not group data and summarize the data. Instead, use box plots to show the variability.
+
+```{r exercise 05}
+GP_raw %>%
+  ggplot(aes(x = name, y = value, colour = name)) +
+  geom_boxplot() +
+  facet_wrap(~Condition, ncol = 1) +
+  theme(legend.position = "none") # removes the legend, as it's unnecessary
+
+```
