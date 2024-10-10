@@ -32,7 +32,7 @@ This is an exercise to practice joining data frames and how the different types 
 
 Create two data frames that need to be joined by a single key column.
 
-Step 1: Create a data frame that has two columns. In the first column, called `x_id`, put the numbers 1 -\> n where n is a number of your choice. In the second column, called `x_value`, use [rnorm()](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/Normal.html) function to generate normally distributed data with mean of 180 and standard deviation of 50. Name this data frame `x_df`
+Step 1: Create a data frame that has two columns. In the first column, called `x_id`, put the numbers `1 -\> n` where n is a number of your choice. In the second column, called `x_value`, use [rnorm()](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/Normal.html) function to generate normally distributed data with mean of 180 and standard deviation of 50. Name this data frame `x_df`
 
 Step 2: Create another data frame that has two columns. In the first column, called `y_id`, put the numbers `1 -> p` where p is a number of your choice and `p` is not equal to `n`. In the second column, called `y_value`, use [rnorm()](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/Normal.html) function to generate normally distributed data with mean of 10 and standard deviation of 2. Name this data frame `y_df`
 
