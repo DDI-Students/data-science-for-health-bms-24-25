@@ -1,0 +1,154 @@
+---
+title: "Pollution in Madrid"
+author: "Data Science in Biomedicine - Week 3"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## About the data
+
+The data for this lab were collected under the instructions from Madrid's City Council and are publicly available on their website. In recent years, high levels of pollution during certain dry periods has forced the authorities to take measures against the use of cars and act as a reasoning to propose certain regulations. These data include daily and hourly measurements of air quality from 2001 to 2008. Pollutants are categorized based on their chemical properties.
+
+There are a number of stations set up around Madrid and each station's data frame contains all particle measurements that such station has registered from 01/2001 - 04/2008. Not every station has the same equipment, therefore each station can measure only a certain subset of particles. The complete list of possible measurements and their explanations are given by the website:
+
+* `SO_2`: sulphur dioxide level measured in μg/m³. High levels can produce irritation in the skin and membranes, and worsen asthma or heart diseases in sensitive groups.
+* `CO`: carbon monoxide level measured in mg/m³. Carbon monoxide poisoning involves headaches, dizziness and confusion in short exposures and can result in loss of consciousness, arrhythmias, seizures or even death.
+* `NO_2`: nitrogen dioxide level measured in μg/m³. Long-term exposure is a cause of chronic lung diseases, and are harmful for the vegetation.
+* `PM10`: particles smaller than 10 μm. Even though they cannot penetrate the alveolus, they can still penetrate through the lungs and affect other organs. Long term exposure can result in lung cancer and cardiovascular complications.
+* `NOx`: nitrous oxides level measured in μg/m³. Affect the human respiratory system worsening asthma or other diseases, and are responsible of the yellowish-brown color of photochemical smog.
+* `O_3`: ozone level measured in μg/m³. High levels can produce asthma, bronchytis or other chronic pulmonary diseases in sensitive groups or outdoor workers.
+* `TOL`: toluene (methylbenzene) level measured in μg/m³. Long-term exposure to this substance (present in tobacco smoke as well) can result in kidney complications or permanent brain damage.
+* `BEN`: benzene level measured in μg/m³. Benzene is a eye and skin irritant, and long exposures may result in several types of cancer, leukaemia and anaemias. Benzene is considered a group 1 carcinogenic to humans.
+* `EBE`: ethylbenzene level measured in μg/m³. Long term exposure can cause hearing or kidney problems and the IARC has concluded that long-term exposure can produce cancer.
+* `MXY`: m-xylene level measured in μg/m³. Xylenes can affect not only air but also water and soil, and a long exposure to high levels of xylenes can result in diseases affecting the liver, kidney and nervous system.
+* `PXY`: p-xylene level measured in μg/m³. See MXY for xylene exposure effects on health.
+* `OXY`: o-xylene level measured in μg/m³. See MXY for xylene exposure effects on health.
+* `TCH`: total hydrocarbons level measured in mg/m³. This group of substances can be responsible of different blood, immune system, liver, spleen, kidneys or lung diseases.
+* `NMHC`: non-methane hydrocarbons (volatile organic compounds) level measured in mg/m³. Long exposure to some of these substances can result in damage to the liver, kidney, and central nervous system. Some of them are suspected to cause cancer in humans.
+
+The goal of this assignment is to see if pollutants are decreasing (is air quality improving) and also compare which pollutant has decreased the most over the span of 5 years (2001 - 2006).
+
+1. First do a plot of one of the pollutants (EBE).
+2. Next, group it by month and year; calculate the maximum value and plot it (to see the trend through time).
+3. Now we will look at which pollutant decreased the most. Repeat the same thing for every column - to speed up the process, use the map() function. First we will look at pollution in 2001 (get the maximum value for each of the pollutants). And then do the same for 2006.
+
+We will be using the `tidyverse` library, so let's load it in first:
+
+```{r load-tidyverse}
+library(tidyverse)
+```
+
+## Your tasks
+
+Remember to switch driver after each task
+
+
+**Task 1**
+
+To begin with, load the `madrid_pollution.tsv` data set into your R environment. Assign the data to an object called madrid. Notice the file extension of the data is `tsv`. This is a tab-separated values file which uses the tab character to separate values, rather than a comma. Which tidyverse function should you use to read the data?  
+
+```{r loading-data}
+# Your code below:
+
+```
+
+**Task 2**
+
+Now that the data is loaded in R, create a scatter plot that compares ethylbenzene (EBE) values against the date they were recorded. This graph will showcase the concentration of ethylbenzene in Madrid over time. As usual, label your axes:
+* x = Date
+* y = Ethylbenzene (μg/m³)
+Assign your answer to an object called `EBE_pollution`.
+
+```{r EBE_pollution}
+# Your code below:
+
+```
+
+What is your conclusion about the level of EBE over time?
+
+**Task 3**
+
+The question above asks you to write out code that allows visualization of all EBE recordings - which are taken every single hour of every day. Consequently the graph consists of many points and appears densely plotted. In this question, we are going to clean up the graph and focus on max EBE readings from each month. Use the `group_by` and `summarize` pattern to create a new data set with maximum EBE reading from each month in each year. Remember that each year has the same months - this has consequences for how you group. Save your new data set as madrid_pollution.
+
+```{r madrid_pollution}
+# Your code below:
+
+```
+
+**Task 4**
+
+Plot the new maximum EBE values versus the month they were recorded, split into side-by-side plots for each year. Use facetting to plot each year side-by-side. Rotate the axis labels to make them more readable (Google how to do it if you can't remember)
+
+Assign your answer to an object called `madrid_plot`. Remember to label your axes.
+
+```{r madrid_plot}
+# Your code below:
+
+```
+
+**Task 5**
+
+Now we want to see which of the pollutants has decreased the most. Therefore, we must repeat the same thing that we did in the questions above but for every pollutant (using the original data set)! This is where `purrr`'s `map*` functions can be really helpful!
+
+First we will look at Madrid pollution in 2001 (filter for this year). Next we have to select the columns that should be excluded (such as the date). Lastly, use the `map_df()` function to create max values for all columns.
+
+Assign your answer to an object called `pollution_2001`.
+
+```{r pollution_2001}
+# Your code below:
+
+```
+
+**Task 6**
+
+Now repeat what you did for Task 5, but filter for 2006 instead.
+Assign your answer to an object called `pollution_2006`.
+
+```{r pollution_2006}
+# Your code below:
+
+```
+
+**Task 7**
+
+Which pollutant decreased by the greatest magnitude between 2001 and 2006? Given that your the two objects you just created, `pollution_2001` and `pollution_2006` are data frames with the same columns you should be able to subtract the two objects to find which pollutant decreased by the greatest magnitude between the two years.
+
+```{r subtract-dfs}
+# Your code below:
+
+
+```
+
+
+**Task 8**
+
+Given that there were only 14 columns in the data frame above, you could use your eyes to pick out which pollutant decreased by the greatest magnitude between 2001 and 2006. But what would you do if you had 100 columns? Or 1000 columns? It would take A LONG TIME for your human eyeballs to find the biggest difference. Maybe you could use the min function:
+
+```{r min-function, eval = FALSE}
+pollution_2006 - pollution_2001
+min(pollution_2006 - pollution_2001)
+```
+
+This is a step in the right direction, but you get the value and not the column name... What are we to do? Tidy our data! Our data is not in tidy format, and so it's difficult to access the values for the variable pollutant because they are stuck as column headers. Use `pivot_longer` to tidy our data, so that we've got the pollutant name in one column and the difference value in another column. Save the new data set as pollution_diff.
+
+```{r pollution_diff}
+# Your code below:
+
+```
+
+**Task 9**
+Now that you have tidy data, you can use `arrange` and `desc` to order the data in descending order. Each element of the `value` column corresponds to an amount of decrease in a pollutant; so the largest decrease in pollutant should be most negative entry, i.e., the last row in the resulting dataframe. Therefore, we can take the sorted dataframe and pipe it to `tail` (with the argument `n = 1`) to return only the last row of the data frame.
+
+(the function `tail` is just like `head`, except it returns the last rows of the dataframe instead of the first rows.)
+
+Assign your answer to an object called `max_pollution_diff`.
+
+```{r max_pollution_diff}
+# Your code below:
+
+```
+

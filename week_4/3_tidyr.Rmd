@@ -1,0 +1,83 @@
+---
+title: "Particiapants and Responses"
+author: "Kasia Banas"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+
+```
+
+## Exercise 01
+
+You will need the files **IM.csv** and **GP.csv** in the data folder for this exercise.
+
+These are participants responses on two questionnaires with each participant identified by their ID (`Participant` in *IM.csv* and `Respondent` in *GP.csv*), `Condition` (which experimental group they belong to), and their `Gender`.
+
+Read both datasets and join them so that there no missing values in the resulting dataset (some participants are missing in `GP.csv`, so there are *three* joins that can do this, which one will you pick? Use a tidyverse function).
+
+Then, turn `Condition` and `Gender` into factors, so that for `Condition` levels are `"control"` (`1`) and `"game"` (`2`) and for `Gender` levels are `"female"` (`1`) and `"male"` (`2`).
+
+```{r exercise 01}
+
+```
+
+## Exercise 02
+
+This is an exercise to practice joining data frames and how the different types of join behave.
+
+Create two data frames that need to be joined by a single key column.
+
+Step 1: Create a data frame that has two columns. In the first column, called `x_id`, put the numbers 1 -\> n where n is a number of your choice. In the second column, called `x_value`, use [rnorm()](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/Normal.html) function to generate normally distributed data with mean of 180 and standard deviation of 50. Name this data frame `x_df`
+
+Step 2: Create another data frame that has two columns. In the first column, called `y_id`, put the numbers `1 -> p` where p is a number of your choice and `p` is not equal to `n`. In the second column, called `y_value`, use [rnorm()](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/Normal.html) function to generate normally distributed data with mean of 10 and standard deviation of 2. Name this data frame `y_df`
+
+Step 3: Join the two data frames using a join of your choice and note the dimensions of the resulting object. Try a different join and see what happens.
+
+Step 4: Play around with values of `n` and `p` . Do it so that *inner* and *right* join would give the same final table but *left* and *full* would give you a longer one (test this explicitly!). After joining two data frames, plot `x_value` against `y_value` and superimpose linear regression fit.
+
+```{r exercise 02}
+
+
+```
+
+## Exercise 03
+
+Analyze *GP.csv* data, a questionnaire on gaming habits, which was conducted prior to an experiment to check whether two groups of participants assigned to *Game* and *Experiment* conditions have similar gaming habits.
+
+We would like to inspect responses to individual items in a questionnaire for different conditions, as this will tell us whether we should expect a difference.
+
+Split the computations below into two pipelines. One that loads and pre-processes the data (steps 1-3). Another one that produces a summary and stores it into a different table (step 4).
+
+Advice, implement it one step at a time, checking the data frame and making sure that you get expected results before piping it and adding the next operation.
+
+1.  Read the file.
+2.  Convert `Condition` column to a factor with `1` corresponding to `"game"` and `2` to `"control"`.
+3.  Pivot all `GP..` columns. You should get a table with five columns: `Respondent`, `Condition`, `Gender`, `name` (or a column name that you specified), and `value` (or a column name that you specified). Hint, you can use slicing `:` to specify the range of columns or [starts_with()](https://tidyselect.r-lib.org/reference/starts_with.html) function to specify a common prefix. Try both approaches.
+4.  Group data by Condition and GP item and compute median and [median absolute deviation](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/mad.html) of responses. These are robust versions of mean and standard deviation, better suitable for data with potential outliers.
+
+```{r exercise 03}
+
+```
+
+## Exercise 04
+
+Now you have a data frame that has median and MAD values for each condition and item. Plot them to compare them visually. Use facets and color to make it easier to identify the items and conditions.
+
+NOTE: MAD is a measure of spread, and thus it doesn’t make much sense to plot it as a single point. A better approach is to use it as the basis for drawing error bars, which can be used to illustrate spread in your data.
+
+```{r exercise 04}
+
+```
+
+## Exercise 05
+
+Perform similar analysis on the pivoted data but do not group data and summarize the data. Instead, use box plots to show the variability.
+
+```{r exercise 05}
+
+```

@@ -1,0 +1,59 @@
+---
+title: "Gapminder exercises"
+author: "Kasia Banas"
+date: "2024-10-09"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Prep
+Load the `gapminder` dataset from the package with the same name. If you don't have it installed yet, you may need to do the installation.
+
+```{r}
+# install.packages("gapminder") # installs the library
+library(gapminder) # loads the library
+library(tidyverse) # loads the tidyverse
+data("gapminder") # loads the dataset
+```
+
+You have encountered this dataset before (in the Learn lessons), but do have a quick look at it, just as a reminder. Is it in a wide or long format?
+
+# Exercise 1
+Transform the dataset into a wide format, so that we have a column corresponding to the population of each country in each year. In other words, instead of having multiple rows corresponding to the same country, we want only one row per country. You can disregard information about life expectancy and gdp per capita. Compare the dimensions of this dataset with the dimensions of the original gapminder.
+
+# Exercise 2
+
+Are your column names just numbers corresponding to the different years (e.g. 1952, 1957, etc.)? If that's the case, use the names_prefix argument within the pivot_wider function to make the column names more meaningful (e.g. add the word "population"). Check the help page for `pivot_wider` if unsure how to do this. 
+
+# Exercise 3
+
+Find the top 3 countries with the largest population on each continent, in the most recent year that's included in the dataset. Make a little table showing them.
+
+# Exercise 4
+
+Using the tidyverse approach (i.e. not with `$`), create a vector with the names of the countries included in your table from Exercise 3. Print out this vector and check its properties. Have you noticed anything unusual? How could you fix this issue? (some Googling may be required). Then try the same thing using the $ notation. Do you encounter the same issue?
+
+# Exercise 5
+
+Repeat Exercise 3, but this time also add the population data from 1957.
+
+# Exercise 6
+
+Pivot this dataset (with population from 1957 and 2007), so that you only have one column for population, and another column telling you which year that population value comes from (in other words, make your data tidy).
+
+# Exercise 7
+
+Now, create a plot where you have population on the x-axis, countries on the y-axis, and the population in 1957 and 2007 is indicated as a dot, each in a different colour.
+
+# Exercise 8
+
+Add a line to the plot, connecting the two dots in each row, to obtain a Cleveland dot plot. See some examples here: 
+https://www.storytellingwithdata.com/blog/2020/12/9/what-is-a-dot-plot
+
+# Exercise 9
+
+Make your plot pretty (title, axis titles, interesting colours, etc.).
+
