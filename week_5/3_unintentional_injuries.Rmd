@@ -1,0 +1,89 @@
+---
+title: "Unintentional Injuries"
+author: "Data Science in Biomedicine - Week 5"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+## Background
+
+Unintentional injury is one of the leading causes of death in children and young adults. The elderly are also more vulnerable, and it is a common cause of emergency hospital admission in people of all ages. Many injuries may be preventable, and through the collection and analysis of data, patterns can be explored, and evidence gathered, helping to inform policy makers and the public so that useful evidence-based prevention strategies can be developed.
+
+In this project you will be exploring the **Unintentional Injuries** datasets (admissions and deaths) from the Public Health Scotland open data platform. The datasets include information on admissions and deaths relating to injuries and assaults in Scotland.
+
+Here is a link with more information on the **Unintentional Injuries** datasets:
+
+-   <https://www.opendata.nhs.scot/dataset/unintentional-injuries>
+
+## Data
+
+There are three data files that you need to download from the URLs that are below. Click on the URL of the CSV files to download each file.
+
+-   <https://www.opendata.nhs.scot/dataset/unintentional-injuries/resource/aee43295-2a13-48f6-bf05-92769ca7c6cf>
+-   <https://www.opendata.nhs.scot/dataset/unintentional-injuries/resource/89807e07-fc5f-4b5e-a077-e4cf59491139>
+-   <https://www.opendata.nhs.scot/dataset/geography-codes-and-labels/resource/652ff726-e676-4a20-abda-435b98dd7bdc>
+
+Move the files into a data folder. You should have 3 files.
+
+1.  ui_admissions_2023.csv
+2.  ui_deaths-2023-.csv
+3.  hb14_hb19.csv
+
+A few points to note about the dataset:
+
+-   Many of the rows contain aggregated data, due to each variable including categories such as “All”. You will need to decide what to do with this aggregate level data.
+-   The variable “HBR” refers to Health Board Region codes, which is the variable to match if joining with the Health Boards look-up. Be sure to check for aggregate level codes in the Health Board look-up as well.
+-   The Health Board code for the whole of Scotland is S92000003.
+
+## Your task
+
+Your task today is to explore the injuries datasets and answer the questions below. To answer the questions you must use the datasets provided. The R code used in all aspects of loading, processing, analysis and reporting must be visible in your final submission. You are encouraged to include tables and figures to illustrate your report. You can use any R packages of your choosing to create this report; you are not restricted to those discussed in the course.
+
+## The output
+
+In your report, you must explore the following questions:
+
+-   What types of injuries are most common and for which demographic (the data include age and sex)?
+-   What is the rate of death in admissions of these injuries?
+
+Your report should be written as if it were to be read and followed by another student on this course. Please explain your analytical decisions - it's helpful to know why you decided to do things in this way and not another. Add comments in your code, especially when you use functions or approaches not covered in this course.
+
+We are not looking for one specific analysis. It is up to you to decide how to operationalise the two research questions. As you work with the data, feel free to make decisions on whether you want to focus on a specific demographic or location(s) if that makes your message clearer and analysis more sound.
+
+## The MVP for question 1
+
+You can go quite far towards answering the first question without doing any joins or complicated data wrangling, and using just the `ui_admissions_2023.csv` file. Explore the data file, deal with the aggregate data rows, and produce a visualisation that answers (one aspect of) this question.
+
+NOTE: It's probably a good idea to focus on a single year at first. You'll have to make a decision about which year it should be - remember to justify your decision in writing.
+
+## One step further
+
+Now that you've gotten to know the admissions data a little, think about another visualisation or table that would go further towards answering the first question. Don't create it now, just describe what you would want to do.
+
+## The join
+
+In order to answer the second question, you will need to join the admissions file with the deaths file. Have a look at both files first, to identify the potential issues. Fix the issues, then go ahead and join.
+
+## The MVP for question 2
+
+What would the MVP be for question 2? Create it. And then describe how you would take things further, if you had the time.
+
+## Use all information you've got
+
+The exercise authors provided you with `hb14-hb19.csv`, which gives you the names of health boards. Join it with your dataset that you created for admissions and deaths and make use of it. Here are some examples of what you could do:
+
+-   focus on a single health board
+-   compare and contrast two health boards
+-   compare all health boards
+
+## Knit
+
+At this point, knit your report into PDF and see if it looks nice. If you spot any issues, fix them or ask for help now.
+
+## Do more
+
+If you have time, try and implement some of your "one step further" ideas from above.

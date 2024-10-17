@@ -1,0 +1,68 @@
+---
+title: "Hospital Length of Stays"
+author: "Keith Douglas"
+date: "2024-10-15"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+```{r}
+library(tidyverse)
+library(NHSRdatasets)
+library(knitr)
+```
+
+# Load the data from the package
+```{r}
+data("LOS_model")
+?LOS_model
+```
+
+# Inspect
+```{r}
+
+
+```
+
+
+# Make Death a factor
+```{r}
+
+```
+
+
+# Recode Death levels
+```{r}
+
+```
+
+
+# Create a summary table where each combination of Organisation and Death gets a count (n).
+```{r}
+
+```
+
+# Make a wide table with Dead and Survived as rows with a column for each Trust
+```{r}
+
+```
+
+# Another pivot with Survived and Died as columns, Trusts as rows.
+# Also calculate the % survived for each Trust
+```{r}
+
+```
+
+
+# Make the wide table pretty with kable()
+```{r}
+
+```
+
+
+# Let's knit to PDF
+
+
