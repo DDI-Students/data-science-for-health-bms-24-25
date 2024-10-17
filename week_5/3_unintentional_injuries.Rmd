@@ -74,7 +74,7 @@ What would the MVP be for question 2? Create it. And then describe how you would
 
 ## Use all information you've got
 
-The exercise authors provided you with `hb14-hb19.csv`, which gives you the names of health boards. Join it with your dataset that you created for admissions and deaths and make use of it. Here are some examples of what you could do:
+The exercise authors provided you with `hb14_hb19.csv`, which gives you the names of health boards. Join it with your dataset that you created for admissions and deaths and make use of it. Here are some examples of what you could do:
 
 -   focus on a single health board
 -   compare and contrast two health boards
