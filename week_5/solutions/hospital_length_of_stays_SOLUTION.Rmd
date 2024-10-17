@@ -1,0 +1,95 @@
+---
+title: "Hospital Length of Stays"
+author: "Keith Douglas"
+date: "2024-10-15"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+```{r}
+library(tidyverse)
+library(NHSRdatasets)
+library(knitr)
+```
+
+```{r}
+# Load the data from the package
+data("LOS_model")
+?LOS_model
+```
+
+```{r}
+# Inspect
+glimpse(LOS_model)
+head(LOS_model)
+```
+
+
+# Make Death a factor
+```{r}
+hospital_data <- LOS_model %>% 
+  mutate(Death = factor(Death))
+```
+
+
+# Recode Death levels
+```{r}
+hospital_data <- hospital_data %>% 
+  mutate(Death = Death %>% 
+           fct_recode("Survived" = "0",
+                      "Died" = "1"))
+```
+
+
+# Create a summary table where each combination of Organisation and Death gets a count (n).
+```{r}
+hospital_data_summary <- hospital_data %>% 
+  group_by(Organisation, Death) %>% 
+  tally()
+```
+
+# Make a wide table with Dead and Survived as rows with a column for each Trust
+```{r}
+hospital_data_wide <- hospital_data_summary %>% 
+  pivot_wider(
+    names_from = Organisation,
+    values_from = n
+  )
+```
+
+# Another pivot with Survived and Died as columns, Trusts as rows.
+# Also calculate the % survived for each Trust
+```{r}
+hospital_data_wide_pretty <- hospital_data_summary %>% 
+  pivot_wider(
+    names_from = Death,
+    values_from = n
+  )
+
+hospital_data_wide_pretty <- hospital_data_wide_pretty %>% 
+  mutate(Total = Survived + Died, 
+         Percent_Survived = (Survived/Total) * 100)
+```
+
+
+
+# Make the wide table pretty with kable()
+```{r}
+hospital_data_wide_pretty %>% 
+  kable(
+    col.names = c("Trust", "Survived", "Died", "Total", "Percent Survived"),
+    digits = 0,
+    align = "lcccc",
+    caption = "Hospital Length of Stays data: Percent Survived by Trust"
+  ) %>%
+  kable_styling("striped", full_width = FALSE) %>%
+  add_footnote("Data from the LOS_model")
+```
+
+
+# Let's knit to PDF
+
+
