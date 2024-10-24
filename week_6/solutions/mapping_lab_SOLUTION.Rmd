@@ -1,0 +1,244 @@
+---
+title: "Mapping Lab"
+date: "`r Sys.Date()`"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Unintentional Injuries Admissions
+
+Today, we will be looking at real data from Public Health Scotland. You already know this dataset from last week's labs - it is called `unintentional_injuries.csv` and contains data from the 9 NHS Health Boards in Scotland about emergency hospital admissions as a result of unintentional injuries and assaults.
+
+Our task today will be to plot this aggregated data in the form of a **map** of NHS boards, to gain better insights into unintentional injury admissions across Scotland. Aggregated data means that there are recorded observations of every combination of variable category.
+
+### Task 1
+
+Explore the Data Dictionary for this dataset here -\> <https://www.opendata.nhs.scot/dataset/unintentional-injuries/resource/aee43295-2a13-48f6-bf05-92769ca7c6cf>
+
+### Task 2
+
+**First** load the libraries that we need. (tidyverse, sf)
+
+**Second** load the dataset and examine it. You may decide that you need to clean the names with `clean_names()` from the `janitor` package or you may decide they are ok. What would influence your decision?
+
+```{r}
+# Load the libraries we need
+library(tidyverse)
+library(sf)
+library(janitor)
+```
+
+```{r}
+# Load unintentional injuries data
+injuries_admissions <- read_csv("./data/unintentional_injuries.csv")
+
+# Clean the names of the variables
+injuries_admissions <- injuries_admissions %>% 
+  clean_names()
+```
+
+### Task 3
+
+**First** Filter the data to keep only the fall admissions where the patients are female, above 75 years old, and fell at home in 2022/23, for all HBR boards except "S92000003".
+
+**Hint:** When you want to filter for rows that aren't equal to something, in R you can use the != operator. We want to remove the rows where HBR is "S92000003" because that is an aggregated row of all Health Boards.
+
+**Second** Group your filtered admissions by Health Board and create a numerical summary to compute the sum of number of admissions. Save to an object called `falls_admissions_75_summary`
+
+```{r}
+
+# Filter
+falls_admissions_75 <- injuries_admissions %>% 
+  filter(
+    injury_type=="Falls", 
+    age_group=="75plus years", 
+    sex =="Female", 
+    injury_location=="Home", 
+    financial_year=="2022/23", 
+    hbr != "S92000003"
+  )
+
+
+# Group by Health Board
+falls_admissions_75_summary <- falls_admissions_75 %>% 
+  group_by(hbr) %>% 
+  summarise(hbr_falls = sum(number_of_admissions))
+```
+
+### Task 4
+
+**First** Load the NHS Health board Shapefile (NHS_healthboards_2019.shp) and save it into an object called `NHS_healthboards` using `st_read`. Examine the `NHS_healthboards` object. What is the geometry type?
+
+**Second** Join the `NHS_healthboards` data with your filtered and grouped admissions data `falls_admissions_75_summary`.
+
+```{r}
+# load the NHS Health board Shapefile
+NHS_healthboards <- st_read("./data/NHS_HealthBoards_2019.shp")
+
+# Join spatial data with falls_admissions_75_summary
+falls_admissions_hb <- NHS_healthboards %>%
+  full_join(falls_admissions_75_summary, join_by(HBCode == hbr))
+```
+
+### Task 5
+
+Plot a map of the number of falls at home in the female 75+ age group across NHS health boards in Scotland.
+
+**Hint:** Use ggplot + geom_sf, and aesthetically fill with the number of falls. Try using scale_fill_distiller with a palette. Add a title and a subtitle. Use your plotting skills to make it look clear and understandable. E.G Try using some theme settings.
+
+What do the colours mean? How would you interpret this?
+
+```{r}
+# Plot a map of the number of falls at home in the female 75+ age group across NHS health boards in Scotland.
+map_falls_admissions_hb <- falls_admissions_hb %>%
+  ggplot(aes(fill = hbr_falls)) +
+  geom_sf(colour = "black", size = 0.1) +
+  scale_fill_distiller(
+    palette = "Blues", 
+    direction = 1,  
+    name = "No. of Falls"
+  ) +
+  labs(
+    title = "Total Number of Hospital Admissions for Falls at Home in Women over 75", 
+    subtitle = "Falls at home in women over 75 years by Health Board"
+  ) +
+  theme_void() +
+  theme(
+    plot.title = element_text(face = "bold", size = 16), 
+    plot.subtitle = element_text(size = 8)
+  )  
+
+map_falls_admissions_hb
+```
+
+### Task 6
+
+The problem with using the raw number of falls is that the health boards have different sizes - the raw number does not tell us how prevalent falls are in the local population. So let's formulate a new question.
+
+**Question: In a group of 10,000 women over 75, how many can we expect to be admitted to hospital following a fall at home in each health board?**
+
+Using the same process as above, look at the number of falls per 10,000 women aged 75 and over for falls at home per health board and plot that to a map. 
+
+Ensure your map is a different colour to the previous one. You can use previous objects that you created that filtered falls at home for women over 75 and the `falls_admissions_75_summary` in your solution.
+
+You will need to read in the `hb2019_pop_est.csv` which is a dataset of population estimates for all 14 health boards (2019) in Scotland from 1981 to 2022. The data dictionary link is here:
+
+<https://www.opendata.nhs.scot/dataset/population-estimates/resource/27a72cc8-d6d8-430c-8b4f-3109a9ceadb1>
+
+**First** Read in the population data and filter for the year 2022, Female and remember to filter out the whole of Scotland code S92000003. Add a new column that shows the sum of all the columns across Age75 to Age90plus. Hint: `rowSums` is a handy function.
+
+**Second** Join the population data with `falls_admissions_75_summary`, the object you created earlier
+
+**Third** Create a new column that is the falls per 10k
+
+**Fourth** Join with the NHS_healthboards data to get the GEOMETRY column and health board name
+
+**Fifth** Plot a map using ggplot and geom_sf
+
+```{r}
+
+# Read the population data
+hb_populations_female <- read_csv("./data/hb2019_pop_est.csv") %>% 
+  filter(
+    Year == 2022,
+    Sex == "Female",
+    HB != "S92000003"
+  ) %>% 
+  mutate(Age75plus = rowSums(across(Age75:Age90plus))) %>% 
+  select(HB,Age75plus) 
+
+
+# Join the population data
+falls_join <- hb_populations_female %>% 
+  left_join(falls_admissions_75_summary, join_by(HB == hbr))
+
+# Create the column for the proportion per 10,000 of women over 75 who fell.
+f75plus_falls_per_10k <- falls_join %>% 
+  mutate(falls_per_10k = (hbr_falls / Age75plus) * 10000)
+
+# Join f75plus_falls_per_10k with NHS_healthboards
+f75plus_falls_per_10k_per_hb <- NHS_healthboards %>%
+  full_join(f75plus_falls_per_10k, join_by(HBCode == HB)) 
+
+
+# Create a map with fill of falls_per_10k
+map_falls_per_10k <- f75plus_falls_per_10k_per_hb %>%
+  ggplot(aes(fill = falls_per_10k)) + 
+  geom_sf(size = 0.1, colour = "darkgrey") +
+  scale_fill_distiller(
+    palette = "Greens", 
+    direction = 1
+  ) +
+  labs(title = "Number of Hospital Admissions per 10,000 for Falls at Home in Women over 75", subtitle = "Falls at home in women over 75 years by Health Board per 10k", fill = "No. of Falls") +
+  theme_void() +
+  theme(
+    plot.title = element_text(face = "bold", size = 10), 
+    plot.subtitle = element_text(size = 9), 
+    legend.title = element_text(face = "bold", size = 10)
+  )
+
+map_falls_per_10k
+```
+
+### Task 7
+
+Maps should have a north arrow and a scale so we're going to add one to one of our maps. 
+
+**First** install and load the `ggspatial` library and have a browse if how it works here -> https://paleolimbot.github.io/ggspatial/
+
+**Second** choose one of your maps and add the following snippet of code to the plot. Spend a bit of time customising your arrow, scale and map to make it appear as you want it to. 
+
+```{r}
+  annotation_scale(    
+    location = "tl"
+  ) +
+  annotation_north_arrow(
+    location = "tl",    
+    pad_y = unit(0.5, "in"),    
+    style = north_arrow_nautical(
+      fill = c("grey40", "white"),      
+      line_col = "grey20"
+    ) 
+  )
+```
+
+
+
+```{r}
+library(ggspatial)
+
+#Create map in ggplot
+map_falls_admissions_hb <- falls_admissions_hb %>%
+  ggplot(aes(fill = hbr_falls)) +
+  geom_sf(size = 0.1, colour = "#000000") +
+  scale_fill_distiller(palette = "Blues", direction = 1) +
+  labs(title = "Unintentional Injuries", subtitle = "Hospital Admissions of Falls in the over 75 Age Group by Health Board", fill = "No. of Falls") +
+  coord_sf() +
+  theme_void() +
+  theme(
+    plot.title = element_text(face = "bold", size = 10), 
+    plot.subtitle = element_text(size = 9), 
+    legend.title = element_text(face = "bold", size = 10),
+    legend.text = element_text(size = 5),
+    legend.direction = "vertical",
+    legend.box = "horizontal"
+  ) +
+  annotation_scale(    
+    location = "tl"
+  ) +
+  annotation_north_arrow(
+    location = "tl",    
+    pad_y = unit(0.5, "in"),    
+    style = north_arrow_nautical(
+      fill = c("grey40", "white"),      
+      line_col = "grey20"
+    ) 
+  ) 
+
+map_falls_admissions_hb
+```
