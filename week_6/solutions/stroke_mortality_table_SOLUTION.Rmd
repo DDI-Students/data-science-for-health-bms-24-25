@@ -1,0 +1,128 @@
+---
+title: "Stroke mortality table"
+author: "Data Science for Health and Biomedical Sciences - Week 6"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+## Introduction
+
+We will use the package `gt` to create a table with data about stroke mortality in Scotland. If you haven't installed this package yet, please do it now.
+
+We'll be working with a stroke mortality dataset from Public Health Scotland. Follow the link below to find the data dictionary, and a downloadable csv file. https://www.opendata.nhs.scot/dataset/scottish-stroke-statistics/resource/19c01b59-6cf7-42a9-876a-b07b9b92d6eb
+
+You will also need a dataset with health board names, you can find it here: https://www.opendata.nhs.scot/dataset/geography-codes-and-labels/resource/652ff726-e676-4a20-abda-435b98dd7bdc
+
+## Create the table  
+
+
+Load the libraries
+```{r, libraries}
+library(tidyverse)  
+library(gt) 
+library(glue) # This package can be used for the subtitle of the table
+```
+
+Import the data
+```{r, import data}
+ 
+# Read in the data
+
+stroke_mortality_raw <- read_csv("https://www.opendata.nhs.scot/dataset/f5dcf382-e6ca-49f6-b807-4f9cc29555bc/resource/19c01b59-6cf7-42a9-876a-b07b9b92d6eb/download/stroke_mortalitybyhbr.csv")
+ 
+hb <- read_csv("https://www.opendata.nhs.scot/dataset/9f942fdb-e59e-44f5-b534-d6e17229cc7b/resource/652ff726-e676-4a20-abda-435b98dd7bdc/download/hb14_hb19.csv")
+ 
+```
+
+Join the datasets
+```{r, join datasets}
+stroke_mortality <- stroke_mortality_raw %>%
+  
+  # Use left join to join both datasets by health board
+  left_join(hb, by = c("HBR" = "HB")) %>%
+  
+  # Select the variables we are interested in 
+  select(Year, HBName, AgeGroup, Sex, Diagnosis, NumberOfDeaths, CrudeRate, EASR) %>% 
+  
+  # Filter out aggregate levels of the variables 
+  filter(Sex != "All" & AgeGroup != "All")
+```
+
+Create the table
+```{r}
+
+# For the subtitle of the graph, extract the health board names
+hb_names <- stroke_mortality %>%
+   filter(HBName %in% c("NHS Lothian", "NHS Greater Glasgow and Clyde")) %>%
+   distinct(HBName) %>% 
+   pull(HBName)
+
+# Create the first version of the table
+# Think about filtering, selecting and grouping
+stroke_table <- stroke_mortality %>%
+  
+  # Filter the year, age group, and health board names of interest
+  filter(Year == 2018,
+          AgeGroup == "75plus years",
+          HBName %in% c("NHS Lothian", "NHS Greater Glasgow and Clyde")) %>%
+  
+  # Group by health board name, and select only the needed columns
+  group_by(HBName) %>% 
+  select(HBName, 
+          Sex, 
+          Diagnosis, 
+          NumberOfDeaths, 
+          CrudeRate, 
+          EASR) %>% 
+  
+  # Generate the table using the gt package
+  gt() %>% 
+  
+  # Move the column 'Sex' after the column 'Diagnosis' 
+  cols_move(columns = Sex, after = Diagnosis) %>%
+  
+  # Rename the columns to make them more user friendly
+  cols_label(HBName = "Health Board",
+            NumberOfDeaths = "Number of Deaths",
+            CrudeRate = "Crude Rate", 
+            EASR = "European Age-Sex Standardised Rate") %>% 
+  
+  # Format the columns with numbers to have two decimal places
+  fmt_number(columns = c(NumberOfDeaths, CrudeRate, EASR), decimals = 2) %>% 
+  
+  # Centre the number columns. Note that the British spelling will not work. Use the
+  # American center instead.
+  cols_align(align = "center",
+             columns = c(NumberOfDeaths, CrudeRate, EASR)) %>% 
+  
+  # Summarise the number columns to display their means
+  summary_rows(columns = c(NumberOfDeaths, CrudeRate, EASR), 
+               fns = list("Average" = ~mean(., na.rm = TRUE)),
+               fmt = list(~ fmt_number(., decimals = 2))) %>% 
+  
+  # Add an overall summary of the number columns
+  grand_summary_rows(columns = c(NumberOfDeaths, CrudeRate, EASR),
+                     fns = list("Overall Average" = ~mean(., na.rm = TRUE)),
+                     fmt = list(~ fmt_number(., decimals = 2))) %>% 
+  
+  # Add a title and subtitle
+   tab_header(
+       title = "Stroke Mortality in 2018 in Adults Aged 75+",
+       
+  # For the subtitle we can use the package glue, and paste the unique values of health board
+       subtitle = glue("Data from {paste(hb_names, collapse = ' and ')}")) %>%
+  
+  # Finally, use tab_spanner to add a title to the columns 'CrudeRate' and 'EASR'.
+  tab_spanner(
+       label = "Rate per 100k population",
+       columns = c(CrudeRate, EASR)
+   ) 
+
+
+```
+
+
+
