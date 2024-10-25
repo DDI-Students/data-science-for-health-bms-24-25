@@ -1,0 +1,94 @@
+---
+title: "Re-create a table in gt()"
+author: "Kasia Banas"
+date: "2024-10-21"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+We will use the package `gt` to create a table with data about stroke mortality in Scotland. If you haven't installed this package yet, please do it now.
+
+We'll be working with a stroke mortality dataset from Public Health Scotland. Follow the link below to find the data dictionary, and a downloadable csv file. https://www.opendata.nhs.scot/dataset/scottish-stroke-statistics/resource/19c01b59-6cf7-42a9-876a-b07b9b92d6eb
+
+You will also need a dataset with health board names, you can find it here: https://www.opendata.nhs.scot/dataset/geography-codes-and-labels/resource/652ff726-e676-4a20-abda-435b98dd7bdc
+
+## Load the libraries
+```{r, libraries}
+library(tidyverse)  
+library(gt) 
+library(glue) # This package can be used for the subtitle of the table
+```
+
+## Import the data
+```{r, import data}
+# Read in the data
+
+stroke_mortality_raw <- read_csv("https://www.opendata.nhs.scot/dataset/f5dcf382-e6ca-49f6-b807-4f9cc29555bc/resource/19c01b59-6cf7-42a9-876a-b07b9b92d6eb/download/stroke_mortalitybyhbr.csv")
+ 
+hb <- read_csv("https://www.opendata.nhs.scot/dataset/9f942fdb-e59e-44f5-b534-d6e17229cc7b/resource/652ff726-e676-4a20-abda-435b98dd7bdc/download/hb14_hb19.csv")
+ 
+```
+
+## Join the datasets
+Join the two datasets to get nice health board names.
+
+```{r}
+
+```
+
+
+## Build an MVP
+Create a first version of the table, using only tidyverse functions. Pipe it to `gt()` to see how it is formatted.
+
+```{r}
+
+```
+
+
+## Improve
+Add `gt()` functions to get your table closer and closer to the end product. 
+If you need some hints, scroll down this document. 
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Hints
+
+Here are the gt() functions that you're likely to need:
+- cols_move()
+- cols_label()
+- cols_align()
+- summary_rows()
+- grand_summary_rows()
+- fmt_number()
+- tab_header()
+- tab_spanner()
+
+
+
+
+
