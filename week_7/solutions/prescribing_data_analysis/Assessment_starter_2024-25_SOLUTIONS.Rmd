@@ -1,0 +1,225 @@
+---
+title: "Assessment starter with 2022 census"
+author: "Kasia Banas"
+date: "2024-10-23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data introduction
+
+For the assessment, you will be working with data about prescriptions in the community in Scotland. These data show you all medicines that have been dispensed to people by pharmacies in the community. There is a separate data set for each month, from October 2015.
+
+You can find the data and the data dictionary here:
+
+https://www.opendata.nhs.scot/dataset/prescriptions-in-the-community
+
+## Focus on the March 2024 file
+
+We'll focus on the March 2024 file, as that includes recent data. You can find the file and its specific data dictionary here:
+
+https://www.opendata.nhs.scot/dataset/prescriptions-in-the-community/resource/a42762ac-47cb-4fb6-b9b1-2478a588c0ed
+
+Read through the data dictionary to make sure that you understand the variables.
+
+Let's download the data and load it into RStudio (note that the file has over 1 million rows - things are starting to get big here, and the download from the website will take over a minute). If you struggle to download from the website, you can find this file on Learn as well.
+
+We'll use the `clean_names()` function from the `janitor` library to have uniform names in all files we upload today.
+
+```{r warning=FALSE}
+library(tidyverse)
+library(janitor) # cleaning data
+library(gt) # tables
+library(here) # directory structure (will be useful later)
+
+data_march2024 <- read_csv("https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/a42762ac-47cb-4fb6-b9b1-2478a588c0ed/download/pitc202403.csv") %>% 
+  clean_names()
+
+```
+
+## Exercise 1
+
+Find out the 10 most prescribed medicines in Scotland, in March 2024. Use the `paid_quantity` variable as your outcome. Produce a table. Start with a simple table; make it pretty if you have time at the end.
+
+```{r}
+top10 <- data_march2024 %>% 
+  filter(!is.na(bnf_item_description)) %>% 
+  group_by(bnf_item_description) %>% 
+  summarise(quantity_sum = sum(paid_quantity)) %>% 
+  arrange(-quantity_sum) %>% 
+  head(n = 10) %>% 
+  gt()
+
+top10
+  
+```
+
+## Exercise 2
+
+Load in the health board names data set from the PHS Open Data website. Perform a join of this and the prescriptions dataset, so you can see names of health boards.
+
+Location of the dataset and data dictionary: https://www.opendata.nhs.scot/dataset/geography-codes-and-labels/resource/652ff726-e676-4a20-abda-435b98dd7bdc
+
+```{r}
+
+HB_lookup <- read_csv("https://www.opendata.nhs.scot/dataset/9f942fdb-e59e-44f5-b534-d6e17229cc7b/resource/652ff726-e676-4a20-abda-435b98dd7bdc/download/hb14_hb19.csv") %>% 
+  clean_names()
+
+data_march2024 <- data_march2024 %>% 
+  full_join(HB_lookup, by = c("hbt" = "hb")) %>% 
+  select(hb_name, hbt:paid_date_month) # this is one way of getting the columns in the order I wanted
+  
+```
+
+## Exercise 3
+
+There are some rows where the HBName has a missing value - find those rows (best save them into a new object), eyeball them and see what's going on (HINT: Check the information available at https://www.opendata.nhs.scot/dataset/non-standard-geography-codes-and-labels/resource/0450a5a2-f600-4569-a9ae-5d6317141899).
+
+```{r}
+missing_mystery <- data_march2024 %>% 
+  filter(is.na(hb_name))
+```
+
+According to the data dictionary, an hbt code of SB0806 indicates that this medication was prescribed by the Ambulance Service, not a GP practice.
+
+## Interlude
+
+Download the `UV103_age_health_board_census.csv` from Learn and copy it into your data folder. The code below reads in and cleans a data file from the census, showing the population in each health board, broken up by age and sex. Open the file in Excel to see what's in there. Then, read the code below, make sure you understand it, and run the code chunk:
+
+Note: Make sure you have a data folder where the file is located.
+
+```{r}
+
+population_data <- read_csv(here("data", "UV103_age_health_board_census.csv"), skip = 10) %>% 
+  # Rename the last column to avoid the messy name in column 6
+  # and to match column names with the prescription dataset
+  rename(Spare = "...6",
+         hb_name = "Health Board Area 2019",
+         hb_population = Count) %>% 
+  # filter the data so that we get the population of the entire health board
+  filter(Age == "All people" & Sex == "All people") %>% 
+  # select only the relevant columns
+  select(hb_name, hb_population) %>% 
+  # change health board names so they match the prescription data
+  mutate(hb_name = paste("NHS", hb_name))
+
+```
+
+Check the resulting dataframe. Don't worry about the warning - it has to do with how the census tables are structured. 
+
+## Exercise 4
+
+Join the `population_data` file with your main data file, so you can see the population of each healthboard. 
+
+```{r}
+data_march2024 <- data_march2024 %>% 
+  full_join(population_data)
+```
+
+## Exercise 5
+
+Study and then run the code below. It introduces a couple of new functions that you may find useful. If anything is unclear, run ?function_name, or ask us.
+
+```{r}
+paracetamol_data <- data_march2024 %>% 
+  filter(str_detect(bnf_item_description, "PARACET")) %>% 
+  group_by(hb_name, bnf_item_description) %>% 
+  summarise(paid_quantity = sum(paid_quantity)) %>% 
+  slice_max(paid_quantity, n = 3) 
+# notice the performance of the slice_max function on a grouped tibble
+```
+
+
+## Exercise 6
+
+As you have discovered, paracetamol is dispensed either as capsules/caplets or as an oral suspension. For each health board, calculate the number of capsules/caplets dispensed in March 2024 per person living in that health board. Plot your findings as a bar chart. Can you order the bars so that they appear in a decreasing order?
+
+```{r}
+# How many tablets/capsules of paracetamol per person?
+paracetamol_per_head <- data_march2024 %>% 
+  filter(str_detect(bnf_item_description, "PARACETAMOL 500MG CAPLETS|PARACETAMOL 500MG CAPSULES")) %>% 
+  group_by(hb_name) %>% 
+  summarise(quantity_per_head = sum(paid_quantity)/mean(hb_population))
+
+per_head_chart <- paracetamol_per_head %>% 
+  ggplot(aes(x = quantity_per_head, y = reorder(hb_name, quantity_per_head))) +
+  geom_bar(stat = "identity") +
+  labs(title = "Prescription of paracetamol per person in each health board",
+       x = "Quantity per head",
+       y = "Health Board")
+ 
+per_head_chart
+```
+
+## Exercise 7
+
+Pick a month from the peak of the pandemic, when people perhaps were less likely to venture out to the pharmacy for paracetamol. Find and download the appropriate file from the website, and then load it into R. Calculate and plot the number of paracetamol tablets/caplets dispensed per person in each health board in that month. Arrange your two graphs together using `patchwork()`.
+
+NOTE: The names of paracetamol items changed in early 2023. You'll need to check what the naming convention was before then.
+
+Look closely at the two graphs and see what could be done to make them more easily comparable. Implement your ideas. Then think about how you could combine the graphs using faceting rather than patchwork. If you have time, try and implement this method (or come back to it later).
+
+```{r}
+library(patchwork)
+
+april2020_data <- read_csv("https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/9cdc0526-21ab-43de-b832-bc032cd31b24/download/pitc202004.csv")
+
+april2020_data <- april2020_data %>% 
+  clean_names() %>% 
+  full_join(HB_lookup, by = c("hbt" = "hb")) %>% 
+  select(hb_name, hbt:paid_date_month) %>% 
+  full_join(population_data)
+
+paracetamol_per_head_april2020_chart <- april2020_data %>% 
+  filter(str_detect(bnf_item_description, "PARACET_CAP|PARACET_TAB")) %>% 
+  group_by(hb_name) %>% 
+  summarise(quantity_per_head = sum(paid_quantity)/mean(hb_population)) %>% 
+  ggplot(aes(x = quantity_per_head, y = reorder(hb_name, quantity_per_head))) +
+  geom_bar(stat = "identity") +
+  labs(x = "Quantity per head", y = "Health Board")
+
+
+per_head_chart / paracetamol_per_head_april2020_chart
+
+```
+
+## Exercise 8
+
+Download data files from 6 consecutive months from the website (e.g. July - December 2022). Put them into a folder called consecutive_data. Then, run the code below to load the data in and put them all into one data frame:
+
+NOTE: You will have to download or copy across the csv files. They are too large to put on Github for this solution. 
+
+```{r}
+files <- list.files(here("data","consecutive_data"), pattern = "csv")
+
+consecutive_data <- files %>% 
+  map_dfr(~read_csv(here("data","consecutive_data", .)))
+```
+
+## Exercise 9
+
+Find the number of paracetamol capsules/caplets dispensed per person in each health board, in each of the consecutive months. Plot the result as a line chart. What patterns do you see? Which health board has dispensed the most paracetamol? And which one the least?
+
+```{r}
+library(lubridate)
+paracetamol_per_head_6months <- consecutive_data %>% 
+  clean_names() %>% 
+  full_join(HB_lookup, by = c("hbt" = "hb")) %>% 
+  select(hb_name, hbt:paid_date_month) %>% 
+  mutate(paid_date_month = parse_date_time(paid_date_month, "ym")) %>% 
+  full_join(population_data) %>% 
+  filter(str_detect(bnf_item_description, "PARACET_CAP|PARACET_TAB")) %>% 
+  group_by(hb_name, paid_date_month) %>% 
+  summarise(quantity_per_head = sum(paid_quantity)/mean(hb_population))
+
+line_chart <- paracetamol_per_head_6months %>% 
+  ggplot(aes(x = paid_date_month, y = quantity_per_head)) +
+  geom_line() +
+  facet_wrap(~hb_name, nrow = 3)
+
+line_chart
+```
+
