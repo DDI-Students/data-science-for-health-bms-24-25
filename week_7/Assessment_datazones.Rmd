@@ -1,0 +1,149 @@
+---
+title: "Other geographical units in the prescribing dataset"
+author: "Data Science in Biomedicine - Assessment"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## First steps
+
+Let's load the prescribing data from March 2024 (same file as in the last worksheet). We'll use the `clean_names()` function from the janitor library to have uniform names in all files we upload today. To load the data, you can use the local file from Learn or the URL "https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/a42762ac-47cb-4fb6-b9b1-2478a588c0ed/download/pitc202403.csv"
+
+The script assumes that you've got all your data files in the same folder as this script file (the best way is to set up a new project in a new working directory, and put all your files there).
+
+```{r}
+library(tidyverse)
+library(janitor) # cleaning data
+library(gt) # tables
+library(here) # directory structure (could be useful later)
+
+data_march2024 <- read_csv("https://www.opendata.nhs.scot/dataset/84393984-14e9-4b0d-a797-b288db64d088/resource/a42762ac-47cb-4fb6-b9b1-2478a588c0ed/download/pitc202403.csv") %>% 
+  clean_names()
+
+```
+
+## GP practices dataset
+
+You can find data about all GP practices in Scotland here: https://www.opendata.nhs.scot/dataset/gp-practice-contact-details-and-list-sizes Let's download the one with data from January 2024, as that is the closest to our prescribing data set. We can use the URL to download the file directly from the website. Read the data dictionary to see what's included in this data set - you may want to include other variables in your own exploration. 
+
+```{r}
+gp_addresses <- read_csv("https://www.opendata.nhs.scot/dataset/f23655c3-6e23-4103-a511-a80d998adb90/resource/54a6e1e3-98a3-4e78-be0d-1e6d6ebdde1d/download/practice_contactdetails_jan2024-open-data.csv") %>% 
+  clean_names() %>% 
+  select(practice_code, gp_practice_name, data_zone) # selecting only the columns we're interested in
+```
+
+## Granularity of data
+
+Last time, we looked at prescription data per Health Board. This worked for our purposes then, as we just wanted to get an idea of how much paracetamol was prescribed in each HB. There are 14 Health Boards in Scotland and while they are quite diverse, I would imagine that at that scale they can be similar to one another in terms of demographics. 
+
+Thus, some of you may want to look at smaller areas, where we can expect larger differences in demographics such as SES, ethnic diversity, etc. One such geographical unit is the postcode, but it turns out that postcodes in Scotland can be very small areas, to the extent that data are not published at postcode level, due to worries about identifiability. Another option is the data zone, which has a population of roughly between 500 and 1000, and is provided already in the GP data set. 
+
+## Data zone lookup
+
+The Open Data website provides a lookup document for data zones, see here: https://www.opendata.nhs.scot/dataset/geography-codes-and-labels Note that the preview does not seem to work (correct on 25/10/2024), but we can still download the files. For now, we'll simply download the data set and select only the data zone number and name.
+
+```{r}
+data_zones <- read_csv("https://www.opendata.nhs.scot/dataset/9f942fdb-e59e-44f5-b534-d6e17229cc7b/resource/395476ab-0720-4740-be07-ff4467141352/download/dz2011_codes_and_labels_21042020.csv") %>% 
+  clean_names() %>% 
+  select(data_zone, data_zone_name)
+```
+
+## General health in each data zone
+
+We'll load in a file with data from the 2022 Scottish Census, telling us the number of people who selected each of the response options in response to a question about their general health.
+To get this dataset, you need to go to the Scotland's Census website and search by topic: https://www.scotlandscensus.gov.uk/. Click on Census data. Make sure you have 2022 selected. Click on Search data by topic. Choose "Health, disability and unpaid care" and pick the first result - "General health" and then "Data Zone 2011" and then "Select All". Select comma separated values in the top right corner. Then click "Download Table". The resulting page will give you the option to download a dataset. Or you can download the dataset from Learn.
+
+
+```{r}
+general_health <- read_csv("UV302_general_health_census.csv",
+                           skip = 10) %>% 
+  clean_names() %>% 
+  filter(row_number() != 1) %>% # remove the first row (with extraneous information)
+  select(-x8) %>%  # remove the final (unnecessary) column
+  rename("data_zone" = "general_health") # rename column
+```
+
+## Exercise 0
+
+Note that the general_health file has a few rows at the bottom that don't provide any information about health in the data zones. How would you remove them? 
+
+## Exercise 1
+
+Inspect the general_health file and look at the sizes of data zones. How many people usually live in one data zone?
+
+## Exercise 2
+
+Add another variable (column) to the general_health file, called prop_bad_health, which gives you the proportion of people who reported being in bad or very bad health (proportional to all people living in that data zone). Plot a histogram and/or boxplot of the variable you've just created and comment on its distribution.
+
+## Exercise 3
+
+You should now have four data sets: `data_march2024`, `gp_addresses`, `data_zones` and `general_health`. Join them together. 
+
+## Exercise 4
+
+Having joined the data, do a bit of exploration, and check the relationship between gp practices and data zones. Are there more GP practices or more data zones? What does that mean about the coverage of GP practices? Are there data zones that have multiple GP practices?
+
+## Exercise 5
+
+Adapt the code from that you did when you filtered for PARACETAMOL in a previous lab to find out the number of paracetamol tablets/capsules prescribed per person in each data zone in March 2024. Create a plot to look at the distribution of this variable.
+
+## Exercise 6
+Do you think there is a correlation between the proportion of people who report being in bad health and how much paracetamol gets prescribed? Analyse the data and find out if your intuition is correct (a plot and a correlation coefficient is what you need here)
+
+## Exercise 7
+Given your findings from Exercise 4, critique your analysis from Exercise 6. What is a key flaw of doing the analysis this way?
+
+## Age
+Let's load the Census data with the distribution of age groups in each data zone. You can download it from Learn. We will need to clean it up a bit. Here is one way to do it:
+
+```{r}
+age_data <- read_csv("UV103_age_groups_census.csv", skip = 10) %>% 
+  filter(row_number() != 1) %>% # remove the first row (with extraneous information)
+  rename(DataZone = `Adult Lifestage`,
+         TotalPopulation = `All people aged 16 and over in households`) %>% 
+  select(DataZone, contains("Total")) %>% 
+  clean_names() %>% 
+  filter(row_number() <= n()-3) #remove last three rows as they contain a footnote
+
+```
+
+## Interlude
+
+In the next part, we'll want to look at medication prescribed for Parkinson's disease. We'll start by creating a new column in the age_data file, where we add up the number of people age 65 and over in each data zone.
+
+```{r}
+over65_data <- age_data %>% 
+  mutate(over_65 = aged_65_to_74_total + aged_75_and_over_total) %>%  
+  select(data_zone, total_population, over_65)
+```
+
+Levodopa is one class of drugs commonly prescribed for Parkinson's disease: https://www.parkinsons.org.uk/information-and-support/parkinsons-drugs Brand names of drugs in this class are the following: Madopar, Apodespan, Caramet, Lecado, Sinemet, Duodopa. We'll now filter the prescribing data set to only include these drugs, and save the new data set as `parkinsons_data`. Note the interesting use of the `paste()` function to help with the filtering.
+
+```{r}
+
+parkinsons_drugs <- c("MADOPAR", "APODESPAN", "CARAMET", "SINEMET", "DUODOPA")
+
+# Run the code below to see how you can use paste to help you create the set of words that str_detect will look for:
+paste(parkinsons_drugs, collapse = "|")
+
+# And run the code below here to do the actual filtering
+parkinsons_data <- data_march2024 %>% 
+  filter(str_detect(bnf_item_description, paste(parkinsons_drugs, collapse = "|")))
+```
+
+## Exercise 8
+
+Now, join parkinsons_data with gp_addresses, data_zones and over65_data, so you can see how the number of people over 65 relates to how many prescriptions for levodopa are dispensed. Filter the data to only include the Lothian Health Board (S08000024). 
+
+## Exercise 9
+
+Create a new dataset that will tell you out how many levodopa prescriptions are dispensed in each data zone within the Lothian Health Board, and how many people over 65 live in each data zone. 
+
+## Exercise 10
+
+Explore the correlation between the number of people over 65 and the number of prescriptions for levodopa. Critique your analysis with respect to how GP practices are distributed against data zones. 
+
