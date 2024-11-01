@@ -94,7 +94,7 @@ When you've done a chunk of work:
 
 It's a good idea not to push up large data files to Github. 
 
-1. Create a `data` folder and add add a `.csv` file in the `data` folder. 
+1. Create a `data` folder and add add a `.csv` file in the `data` folder. (it doesn't matter how big the csv file is, you can create a dummy one. We're just testing that it doesn't get added to your Github.com repo)
 
 ![](./images/data-folder.png)
 
