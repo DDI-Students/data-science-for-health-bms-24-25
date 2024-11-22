@@ -1,0 +1,358 @@
+---
+title: "Genome-wide association studies　(solutions)"
+author: "Mark Adams (Data Science for Health and Biomedical Sciences)"
+format:
+  html:
+    toc: true
+    self-contained: true
+    df-print: paged
+editor: visual
+---
+
+## Introduction
+
+Genome-wide association studies (GWAS) are typically run with dedicated software programs, such as [PLINK](https://www.cog-genomics.org/plink/2.0/) and [regenie](https://rgcgithub.github.io/regenie/); using data stored in specialised formats, including [VCF](https://samtools.github.io/hts-specs/), [BED](https://www.cog-genomics.org/plink/1.9/formats#bed), and [BGEN](https://www.well.ox.ac.uk/~gav/bgen_format/). To gain a better understanding of the process, in this lab we will perform a GWAS on several small sections of the genome using R.
+
+```{r libraries}
+#| warning: false
+library(tidyverse)
+library(dplyr)
+library(readr)
+library(ggplot2)
+library(corrplot)
+```
+
+## Data
+
+There are 5 data files for this lab.
+
+### Phenotypes
+
+`pheno.tsv` contains phenotypes for major depressive disorder (MDD) and height. Participant IDs are stored in the `IID` ("Individual ID") column. MDD is a binary phenotype with `0=control` and `1=case`. Height is a quantitative phenotype measured in centimetres.
+
+```{r pheno}
+pheno <- read_tsv('pheno.tsv')
+pheno
+```
+
+### Genotypes
+
+Genotypes for two short sections of the genome are stored as plain text in `genotypes.11-113200000-113500000.tsv.gz` and `genotypes.20-34000000-34100000.tsv.gz` The files are named with the pattern `CHR-START-END` where `CHR` is the chromosome number and `START`/`END` are base pair coordinates of the genomic region covered by the file.
+
+The genotypes have a row for each participant and a column for each genotype marker. The genetic markers are named with a [Single Nucleotide Polymorphism Database (dbSNP)](https://www.ncbi.nlm.nih.gov/snp/) record ID, referred to as an rsID. Each cell contains the count of reference alleles (0-2) to encode a participant's genotype.
+
+```{r geno}
+genotypes_chr11 <- read_tsv("genotypes.11-113200000-113500000.tsv.gz")
+genotypes_chr20 <- read_tsv("genotypes.20-34000000-34100000.tsv.gz")
+```
+
+### Genotype frequencies
+
+Information on each genotype marker (listed in the `ID` column) with the chromosome `#CHROM`, base pair position (`POS`), reference and alternate alleles (`REF`/`ALT`), and frequencies of the reference allele. Base pair positions are in coordinates from [Genome Reference Consortium Human Build 37 (GRCh37)](https://www.ncbi.nlm.nih.gov/assembly/GCF_000001405.13/).
+
+```{r freq}
+freq_chr11 <- read_tsv("genotypes.11-113200000-113500000.afreq")
+freq_chr20 <- read_tsv("genotypes.20-34000000-34100000.afreq")
+```
+
+### Exercise 1: Summarise phenotypes
+
+Examine the phenotype data. How many cases and controls are there for MDD? Plot a histogram of the height data.
+
+#### Solutions
+
+```{r ex1_mdd_solution1}
+# tidyverse solution
+pheno %>%
+  count(MDD)
+```
+
+```{r ex1_mdd_solution2}
+# alt tidyverse solution
+pheno %>%
+  group_by(MDD) %>%
+  summarize(n=n())
+```
+
+```{r ex1_mdd_solution3}
+# base solution
+table(pheno$MDD)
+```
+
+```{r ex1_height_solution1}
+# ggplot solution
+ggplot(pheno, aes(x=height)) +
+  geom_histogram()
+```
+
+```{r ex1_height_solution2}
+# base solution
+hist(pheno$height)
+```
+
+## Data merging
+
+### Exercise 2: Merge genotypes and phenotypes
+
+Merge the phenotype and genotype data together. Make two data frames, one called `pheno_chr11` that has the phenotypes merged with the genotypes from chromosome 11 and another called `pheno_chr20` with the genotypes from chromosome 20.
+
+#### Solution
+
+```{r ex2_solution1}
+# tidyverse solution
+pheno_chr11 <-
+pheno %>%
+  left_join(genotypes_chr11, by='IID')
+
+pheno_chr20 <-
+  pheno %>%
+  left_join(genotypes_chr20, by='IID')
+```
+
+## GWAS as regression
+
+A genome-wide association study is typically conducted as a regression analysis, where the phenotype is the outcome variable and the genotype value is one of the predictors. In a real GWAS, a number of other covariates would be included in the analysis, such as technical variables (to control for technical artifacts from different genotyping platforms) and population ancestry variables (principal components from an eigen decomposition of a matrix of all genotypes, which control for geographical and environmental factors that are confounded with genetics and ancestry).
+
+Let's look at the summary data for the first genotype from the region on chromosome 11, `rs12225351`:
+
+```{r rs12225351_freq}
+freq_chr11 %>%
+  filter(ID == 'rs12225351')
+```
+
+We see from this table that `rs12225351` is a single nucleotide polymorphism (SNP) with two alleles: C and T. For this SNP, the reference allele (`REF`) is C and has a frequency of `r freq_chr11 %>% filter(ID == 'rs12225351') %>% pull(REF_FREQ) %>% round(3) * 100`%.
+
+We can count the genotypes of `rs12225351` with:
+
+```{r rs12225351_count}
+pheno_chr11 %>%
+  count(rs12225351)
+```
+
+```{r rs12225351_do_count}
+#| echo: false
+rs12225351_counts <- 
+  pheno_chr11 %>%
+  count(rs12225351) %>%
+  pull(n)
+```
+
+The values in the genotype column represent the count of `C` alleles, with `T` being the alternate allele, so there are `r rs12225351_counts[1]` participants with `T/T` genotypes, `r rs12225351_counts[2]` with `C/T` or `T/C` genotypes, and `r rs12225351_counts[3]` with `C/C` genotypes.
+
+The 0/1/2 coding of reference allele counts encodes an additive model of genetic effects. This coding can be used numerically as a variable in a regression, such as in an `lm()`. Let's regress height on SNP rs12225351
+
+```{r rs12225351_lm}
+height_rs12225351_lm <- lm(height ~ rs12225351, data=pheno_chr11)
+summary(height_rs12225351_lm)
+```
+
+### Exercise 3: Effect size interpretation
+
+What is the effect of rs12225351 genotype on height, and how do you interpret the effect size?
+
+#### Solution
+
+The effect of the SNP on height can be read from the regression coefficient for `rs12225351` from the model output. The estimate can be interpreted as saying that each copy of the C allele is associated on average with a change of `r round(summary(height_rs12225351_lm)$coefficients['rs12225351','Estimate'], 4)`cm in height. However, the effect is not significant so the allele is not associated with height.
+
+### Linkage disequilibrium
+
+Examine linkage disequilibrium (correlation among genotypes) across a small region of the genome:
+
+```{r ld}
+corrplot::corrplot(cor(pheno_chr11 %>% select(rs948176:rs10891536)))
+```
+
+## Mini-GWAS: Height in a region on chromosome 20
+
+To perform a GWAS over these small genomic regions, we can loop over the SNPs and fit a separate regression model for each. Here, we will perform a GWAS of height over a small segment from chromosome 20.
+
+```{r gwas_chr20}
+
+# extract the names of all the SNP columns
+snps_chr20 <-
+  pheno_chr20 %>%
+  select(starts_with('rs')) %>%
+  names()
+
+# fit a linear model for each SNP as the predictor and height as the outcome
+# extract the second row of coefficients (for the SNP effect) from each model
+height_gwas_chr20 <- snps_chr20 %>%
+  map(~lm(pheno_chr20[['height']] ~ pheno_chr20[[.x]])) %>%
+  map(~summary(.x)$coefficients[2,]) %>%
+  bind_rows() %>%
+  add_column(ID = snps_chr20, .before = "Estimate")
+```
+
+### Summary statistics
+
+To do more with our analysis, let's combine it with the summary information on each SNP marker from the allele frequency table, then give the columns shorter names.
+
+```{r sumstats_chr20}
+
+height_sumstats_chr20 <-
+freq_chr20 %>%
+  inner_join(height_gwas_chr20, by='ID') %>%
+  select(CHR=`#CHROM`, SNP=ID, POS, REF, ALT, REF_FREQ,
+         BETA=Estimate, SE=`Std. Error`, t=`t value`, P=`Pr(>|t|)`)
+height_sumstats_chr20
+```
+
+### Regional Manhattan plot
+
+A Manhattan plot is a standard way of visually presenting GWAS results. It compares SNPs by their basepair position along the X axis to $-log_{10}(P)$ on the Y axis.
+
+#### Exercise 4: Plotting GWAS results
+
+Create a regional Manhattan plot for the height sumstats in the chromosome 20 region (hint: use the `log10()` function to transform the P-value). *Bonus:* Draw a horizontal line at the cutoff for genome-wide significance (P \<= 5e-8)
+
+##### Solutions
+
+```{r height_chr20_manhattan_aes}
+# do the transformation as part of the input to aesthetics
+ggplot(height_sumstats_chr20, aes(x=POS, y=-log10(P))) +
+  geom_hline(yintercept=-log10(5e-8), col='red') +
+  geom_point()
+```
+
+```{r height_chr20_manhattan_scale}
+# do the transformation by changing the scale
+neglog10 <- scales::trans_new('neglog10',
+                              transform=function(x) -log10(x),
+                              inverse=function(x) 10^(-x),
+                              breaks=scales::log_breaks(10))
+ggplot(height_sumstats_chr20, aes(x=POS, y=P)) +
+  
+  geom_hline(yintercept=5e-8, col='red') +
+  geom_point() +
+  scale_y_continuous(trans=neglog10)
+```
+
+### Exercise 5: Finding the top hit
+
+Find the SNP with the smallest p-value.
+
+```{r top_hit_chr20}
+
+height_sumstats_chr20 %>%
+  arrange(P) %>%
+  slice_head(n=1)
+
+```
+
+### Exercise 6: Online database lookup
+
+Look up the SNP in [dbSNP](https://www.ncbi.nlm.nih.gov/snp/) using the rsID. Where is the SNP located and what genes are in this region?
+
+#### Solution
+
+[rs224329](https://www.ncbi.nlm.nih.gov/snp/rs224329) is an upstream transcript variant in [GDF5](https://www.ncbi.nlm.nih.gov/gene/8200) (growth differentiation factor 5).
+
+## Exercise 7: GWAS of other regions and phenotypes
+
+Perform an association analysis of height on the SNPs in the region from chromosome 11 and of MDD in both regions.
+
+#### Solutions: Height chr11
+
+```{r gwas_chr11}
+
+# extract the names of all the SNP columns
+snps_chr11 <-
+  pheno_chr11 %>%
+  select(starts_with('rs')) %>%
+  names()
+
+# fit a linear model for each SNP as the predictor and height as the outcome
+# extract the second row of coefficients (for the SNP effect) from each model
+height_gwas_chr11 <- snps_chr11 %>%
+  map(~lm(pheno_chr11[['height']] ~ pheno_chr11[[.x]])) %>%
+  map(~summary(.x)$coefficients[2,]) %>%
+  bind_rows() %>%
+  add_column(ID = snps_chr11, .before = "Estimate")
+```
+
+```{r sumstats_chr11}
+
+height_sumstats_chr11 <-
+freq_chr11 %>%
+  inner_join(height_gwas_chr11, by='ID') %>%
+  select(CHR=`#CHROM`, SNP=ID, POS, REF, ALT, REF_FREQ,
+         BETA=Estimate, SE=`Std. Error`, t=`t value`, P=`Pr(>|t|)`)
+```
+
+```{r height_chr11_manhattan_aes}
+# do the transformation as part of the input to aesthetics
+ggplot(height_sumstats_chr11, aes(x=POS, y=-log10(P))) +
+  geom_hline(yintercept=-log10(5e-8), col='red') +
+  geom_point()
+```
+
+#### Solutions: MDD chr11
+
+Important detail here is that MDD is a binary trait, so it requires fitting a logistic model and noting the different column names from the coefficients table.
+
+```{r gwas_mdd_chr11}
+
+# extract the names of all the SNP columns
+snps_chr11 <-
+  pheno_chr11 %>%
+  select(starts_with('rs')) %>%
+  names()
+
+# fit a logistic model for each SNP as the predictor and height as the outcome
+# extract the second row of coefficients (for the SNP effect) from each model
+mdd_gwas_chr11 <- snps_chr11 %>%
+  map(~glm(pheno_chr11[['MDD']] ~ pheno_chr11[[.x]], family='binomial')) %>%
+  map(~summary(.x)$coefficients[2,]) %>%
+  bind_rows() %>%
+  add_column(ID = snps_chr11, .before = "Estimate")
+```
+
+```{r sumstats_mdd_chr11}
+
+mdd_sumstats_chr11 <-
+freq_chr11 %>%
+  inner_join(mdd_gwas_chr11, by='ID') %>%
+  select(CHR=`#CHROM`, SNP=ID, POS, REF, ALT, REF_FREQ,
+         BETA=Estimate, SE=`Std. Error`, z=`z value`, P=`Pr(>|z|)`)
+```
+
+```{r mdd_chr11_manhattan_aes}
+# do the transformation as part of the input to aesthetics
+ggplot(mdd_sumstats_chr11, aes(x=POS, y=-log10(P))) +
+  geom_hline(yintercept=-log10(5e-8), col='red') +
+  geom_point()
+```
+
+```{r mdd_chr11_tophit}
+mdd_sumstats_chr11 %>%
+  arrange(P) %>%
+  slice_head(n=1)
+```
+
+## Exercise 8: Online database lookup
+
+Look up your findings in [dbSNP](https://www.ncbi.nlm.nih.gov/snp/), the [GWAS Catalog](https://www.ebi.ac.uk/gwas/), and the [OpenGWAS](https://gwas.mrcieu.ac.uk) database. What other traits and diseases are the SNPs and genes associated with?
+
+### Solution
+
+-   top hit for height on Chr20 is [rs224329](https://www.ncbi.nlm.nih.gov/snp/rs224329) which is associated with [height](https://www.ebi.ac.uk/gwas/variants/rs224329).
+-   gene implicated by height association is GDF5, which is associated with [height and weight](https://www.ebi.ac.uk/gwas/genes/GDF5)
+-   top hit for MDD on Chr11 is [rs61902811](https://www.ncbi.nlm.nih.gov/snp/rs61902811), which is associated with [neuroticism, mood swings, etc](https://gwas.mrcieu.ac.uk/phewas/rs61902811/) and [major depressive disorder and schizophrenia](https://www.ebi.ac.uk/gwas/variants/rs61902811)
+-   top SNP for MDD is an intron in [an uncharacterized RNA gene](https://www.ncbi.nlm.nih.gov/gene/?term=LOC105369501) upstream from [DRD2](https://www.ncbi.nlm.nih.gov/gene/1813). DRD2 is associated with a large number of [behavioral and psychiatric traits](https://www.ebi.ac.uk/gwas/genes/DRD2).
+
+## Further optional activities (no solution for these)
+Download a set of summary statistics from a real study and open them in R. You may want to check the file size before you download a file. Possible sources include:
+
+-   [GIANT consortium](https://portals.broadinstitute.org/collaboration/giant/index.php/GIANT_consortium_data_files)
+-   [Genetics of Personality Consortium](http://www.tweelingenregister.org/GPC/)
+-   [Open GWAS Project](https://gwas.mrcieu.ac.uk/datasets/)
+-   [EBI GWAS Catalog](https://www.ebi.ac.uk/gwas/docs/summary-statistics-format)
+
+Try using the [ggman](https://github.com/drveera/ggman) or the [qqman](https://cran.r-project.org/web/packages/qqman/vignettes/qqman.html) package to make a Manhattan plot. As with any new package, check what data input is expected and the arguments of the functions. Vignettes are a very useful source of information when learning to use a new package.
+There are other ways to create customised Manhattan plots, including interactive plots, using ggplot, ggrepel, plotly, manhattanly or CMplot.
+
+## Data sources
+
+Because of privacy and data use restrictions, it is usually not possible to freely distribute genotypic and phenotypic data. The data used in this exercise is a combination of real and simulated data.
+
+Genetic data was sampled from the [1000 Genomes Project](https://www.internationalgenome.org). Phenotypes were [simulated in GCTA](https://yanglab.westlake.edu.cn/software/gcta/#GWASSimulation) using SNP weights from [Howard et al 2019](https://www.nature.com/articles/s41593-018-%200326-7) (MDD) and [Yengo et al. 2022](https://www.nature.com/articles/s41586-022-05275-y) (height).
